@@ -409,12 +409,14 @@ function ProductCard({
   product,
   onAdd,
   onView,
+  onDetails,
   onWish,
   wished,
 }: {
   product: Product;
   onAdd: (product: Product) => void;
   onView: (product: Product) => void;
+  onDetails: (product: Product) => void;
   onWish: (product: Product) => void;
   wished: boolean;
 }) {
@@ -423,9 +425,9 @@ function ProductCard({
       className="market-product-card"
       role="button"
       tabIndex={0}
-      onClick={() => onView(product)}
+      onClick={() => onDetails(product)}
       onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") onView(product);
+        if (event.key === "Enter" || event.key === " ") onDetails(product);
       }}
     >
       <div className="market-product-image">
@@ -540,6 +542,96 @@ function ProductQuickView({
         </div>
       </section>
     </div>
+  );
+}
+
+function ProductDetailPage({
+  product,
+  related,
+  onBack,
+  onAdd,
+  onWish,
+  onDetails,
+  wished,
+}: {
+  product: Product;
+  related: Product[];
+  onBack: () => void;
+  onAdd: (product: Product) => void;
+  onWish: (product: Product) => void;
+  onDetails: (product: Product) => void;
+  wished: boolean;
+}) {
+  return (
+    <>
+      <section className="market-product-detail">
+        <button className="market-detail-back" onClick={onBack}>
+          <ChevronLeft size={16} /> Back to shop
+        </button>
+        <div className="market-detail-grid">
+          <div className="market-detail-image">
+            <img
+              src={product.image || defaultHeroImage}
+              alt={product.name}
+              onError={(event) => {
+                event.currentTarget.src = defaultHeroImage;
+              }}
+            />
+          </div>
+          <div className="market-detail-copy">
+            <p>
+              {product.type} / {product.tag}
+            </p>
+            <h1>{product.name}</h1>
+            <strong>{product.price}</strong>
+            <small>
+              {product.usd} / {product.stock || 0} pieces available
+            </small>
+            <p className="market-detail-description">
+              {product.description || product.color}
+            </p>
+            <div className="market-detail-actions">
+              <button onClick={() => onAdd(product)}>Add to bag</button>
+              <button onClick={() => onWish(product)}>
+                <Heart size={17} fill={wished ? "currentColor" : "none"} />
+                {wished ? "Saved" : "Save piece"}
+              </button>
+            </div>
+            <a
+              className="market-detail-whatsapp"
+              href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "2349069495391"}?text=${encodeURIComponent(`Hello Beryl RTW, I would like to order the ${product.name}.`)}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Ask about fit or availability on WhatsApp
+            </a>
+          </div>
+        </div>
+      </section>
+      {related.length > 0 && (
+        <section className="market-detail-related">
+          <div className="market-section-title">
+            <div>
+              <p>You may also like</p>
+              <h2>More from the edit</h2>
+            </div>
+          </div>
+          <div className="market-product-grid">
+            {related.map((item) => (
+              <ProductCard
+                key={item.id}
+                product={item}
+                onAdd={onAdd}
+                onView={() => undefined}
+                onDetails={onDetails}
+                onWish={onWish}
+                wished={false}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+    </>
   );
 }
 
@@ -922,6 +1014,12 @@ function Storefront({
     }
   });
   const [quickView, setQuickView] = useState<Product | null>(null);
+  const [detailProduct, setDetailProduct] = useState<Product | null>(() => {
+    const match = window.location.pathname.match(/^\/products\/(\d+)/);
+    return match
+      ? products.find((product) => product.id === Number(match[1])) || null
+      : null;
+  });
   const [discoverOpen, setDiscoverOpen] = useState(false);
   const [visitorSessionId] = useState(() => {
     const existing = localStorage.getItem("beryl-visitor-session");
@@ -966,6 +1064,19 @@ function Storefront({
   useEffect(() => {
     localStorage.setItem("beryl-wishlist", JSON.stringify(wishlist));
   }, [wishlist]);
+  useEffect(() => {
+    const syncRoute = () => {
+      const match = window.location.pathname.match(/^\/products\/(\d+)/);
+      setDetailProduct(
+        match
+          ? products.find((product) => product.id === Number(match[1])) || null
+          : null,
+      );
+    };
+    window.addEventListener("popstate", syncRoute);
+    syncRoute();
+    return () => window.removeEventListener("popstate", syncRoute);
+  }, [products]);
   const visibleProducts = useMemo(() => {
     const filtered = products.filter((product) => {
       const productPrice = priceNumber(product.price);
@@ -1006,6 +1117,16 @@ function Storefront({
     if (!link || link === "#shop") return jump("shop");
     if (link.startsWith("#")) return jump(link.slice(1));
     window.location.assign(link);
+  };
+  const openProductDetails = (product: Product) => {
+    window.history.pushState({}, "", `/products/${product.id}`);
+    setDetailProduct(product);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  const closeProductDetails = () => {
+    window.history.pushState({}, "", "/");
+    setDetailProduct(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const toggleWishlist = (product: Product) => {
     setWishlist((current) => {
@@ -1397,396 +1518,442 @@ function Storefront({
         </div>
       )}
       <main id="top">
-        {hero && (
-          <section
-            className={`market-hero ${hero.layout || "image-right"} ${hero.hideOnMobile ? "hide-on-mobile" : ""} ${hero.hideOnDesktop ? "hide-on-desktop" : ""}`}
-            style={{ backgroundColor: hero.backgroundColor }}
-          >
-            <div className="market-hero-copy" style={{ color: hero.textColor }}>
-              <p>{hero.eyebrow}</p>
-              <h1>{hero.title}</h1>
-              <span>{hero.description}</span>
-              <button onClick={() => followLink(hero.buttonLink)}>
-                {hero.cta}
-              </button>
-              <div className="market-hero-proof">
-                <span>
-                  <b>Secure checkout</b> Reserve on WhatsApp
-                </span>
-                <span>
-                  <b>Made in Lagos</b> Worn everywhere
-                </span>
-              </div>
-            </div>
-            <div className="market-hero-art">
-              <picture>
-                {hero.mobileImage && (
-                  <source
-                    media="(max-width: 700px)"
-                    srcSet={hero.mobileImage}
-                  />
-                )}
-                <img
-                  src={hero.image || defaultHeroImage}
-                  alt="Beryl RTW Ankara collection"
-                />
-              </picture>
-              <div className="market-hero-sticker">
-                New
-                <br />
-                <em>drop</em>
-              </div>
-            </div>
-          </section>
-        )}
-        {categories && (
-          <section className="market-categories">
-            <div className="market-section-title">
-              <div>
-                <p>{categories.eyebrow}</p>
-                <h2>{categories.title}</h2>
-              </div>
-              <button
-                onClick={() => {
-                  setFilter("All");
-                  jump("shop");
-                }}
-              >
-                {categories.cta}
-              </button>
-            </div>
-            <div className="market-category-row">
-              {types.slice(1).map((type, index) => (
-                <button
-                  key={type}
-                  onClick={() => {
-                    setFilter(type);
-                    jump("shop");
-                  }}
-                >
-                  <img
-                    className="market-category-photo"
-                    src={
-                      products.find((product) => product.type === type)
-                        ?.image || defaultHeroImage
-                    }
-                    alt=""
-                    aria-hidden="true"
-                  />
-                  <span className={`market-category-icon cat-${index + 1}`}>
-                    {index === 0
-                      ? "⌁"
-                      : index === 1
-                        ? "✦"
-                        : index === 2
-                          ? "◒"
-                          : "◌"}
-                  </span>
-                  <b>{type}</b>
-                  <small>Shop now</small>
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-        <section className="market-trust-row" aria-label="Beryl RTW promises">
-          <article>
-            <strong>Premium Ankara</strong>
-            <span>Rich, expressive fabrics selected for lasting wear.</span>
-          </article>
-          <article>
-            <strong>Limited pieces</strong>
-            <span>
-              Small-batch drops made to feel personal, never mass-made.
-            </span>
-          </article>
-          <article>
-            <strong>Perfect fit</strong>
-            <span>
-              Thoughtful cuts and an easy fit guide for every silhouette.
-            </span>
-          </article>
-          <article>
-            <strong>Easy returns</strong>
-            <span>Simple support when a piece is not quite right.</span>
-          </article>
-          <article>
-            <strong>Here for you</strong>
-            <span>Excellent customer care before and after your order.</span>
-          </article>
-        </section>
-        {productSection && (
-          <section className="market-shop" id="shop">
-            <div className="market-section-title">
-              <div>
-                <p>{productSection.eyebrow}</p>
-                <h2>{productSection.title}</h2>
-                <span>{productSection.description}</span>
-              </div>
-              <div className="market-controls">
-                <button
-                  onClick={() => {
-                    setFilterOpen((value) => !value);
-                    setSortOpen(false);
-                  }}
-                  aria-expanded={filterOpen}
-                >
-                  <SlidersHorizontal size={15} /> Filter
-                </button>
-                <button
-                  onClick={() => {
-                    setSortOpen((value) => !value);
-                    setFilterOpen(false);
-                  }}
-                  aria-expanded={sortOpen}
-                >
-                  <ChevronDown size={15} /> Sort
-                </button>
-              </div>
-            </div>
-            {filterOpen && (
-              <div className="market-filter-panel">
-                <label>
-                  Minimum price (₦)
-                  <input
-                    type="number"
-                    min="0"
-                    value={minPrice}
-                    onChange={(event) => setMinPrice(event.target.value)}
-                    placeholder="0"
-                  />
-                </label>
-                <label>
-                  Maximum price (₦)
-                  <input
-                    type="number"
-                    min="0"
-                    value={maxPrice}
-                    onChange={(event) => setMaxPrice(event.target.value)}
-                    placeholder="Any"
-                  />
-                </label>
-                <label className="market-check">
-                  <input
-                    type="checkbox"
-                    checked={inStockOnly}
-                    onChange={(event) => setInStockOnly(event.target.checked)}
-                  />{" "}
-                  In stock only
-                </label>
-                <button
-                  onClick={() => {
-                    resetFilters();
-                    setFilterOpen(false);
-                  }}
-                >
-                  Clear filters
-                </button>
-              </div>
-            )}
-            {sortOpen && (
-              <div
-                className="market-sort-panel"
-                role="listbox"
-                aria-label="Sort products"
-              >
-                {[
-                  { value: "newest", label: "Newest" },
-                  { value: "low", label: "Price: low to high" },
-                  { value: "high", label: "Price: high to low" },
-                  { value: "best", label: "Best-selling" },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    className={sort === option.value ? "active" : ""}
-                    onClick={() => {
-                      setSort(option.value);
-                      setSortOpen(false);
-                    }}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            )}
-            <div className="market-filter-row">
-              {types.map((type) => (
-                <button
-                  className={filter === type ? "active" : ""}
-                  key={type}
-                  onClick={() => setFilter(type)}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
-            <div className="market-product-grid">
-              {visibleProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onAdd={add}
-                  onView={setQuickView}
-                  onWish={toggleWishlist}
-                  wished={wishlist.includes(product.id)}
-                />
-              ))}
-            </div>
-            {!visibleProducts.length && (
-              <div className="market-empty-results">
-                <Search size={28} />
-                <h3>No pieces matched that search.</h3>
-                <button onClick={resetFilters}>Clear search and filters</button>
-              </div>
-            )}
-          </section>
-        )}
-        {promo && (
-          <section className="market-promo">
-            <div className="market-promo-image">
-              <img
-                src={promo.image || defaultHeroImage}
-                alt="Beryl RTW campaign"
-                onError={(event) => {
-                  event.currentTarget.src = defaultHeroImage;
-                }}
-              />
-            </div>
-            <div>
-              <p>{promo.eyebrow}</p>
-              <h2>{promo.title}</h2>
-              <span>{promo.description}</span>
-              <button onClick={() => jump("shop")}>{promo.cta}</button>
-            </div>
-          </section>
-        )}
-        {story && (
-          <section className="market-story" id="story">
-            <div>
-              <p>{story.eyebrow}</p>
-              <h2>{story.title}</h2>
-            </div>
-            <p>{story.description}</p>
-            <button onClick={() => jump("shop")}>{story.cta}</button>
-          </section>
-        )}
-        {sections
-          .filter((section) => section.type === "content" && section.visible)
-          .map((section) => (
+        {detailProduct ? (
+          <ProductDetailPage
+            product={detailProduct}
+            related={products
+              .filter(
+                (product) =>
+                  product.id !== detailProduct.id &&
+                  product.status !== "archived" &&
+                  (product.type === detailProduct.type ||
+                    product.color === detailProduct.color),
+              )
+              .slice(0, 4)}
+            onBack={closeProductDetails}
+            onAdd={add}
+            onWish={toggleWishlist}
+            onDetails={openProductDetails}
+            wished={wishlist.includes(detailProduct.id)}
+          />
+        ) : (
+          hero && (
             <section
-              className={`market-custom-row ${section.layout || "split"}`}
-              key={section.id}
-              style={{
-                backgroundColor: section.backgroundColor || "#f5f1e9",
-                color: section.textColor || "#10251b",
-              }}
+              className={`market-hero ${hero.layout || "image-right"} ${hero.hideOnMobile ? "hide-on-mobile" : ""} ${hero.hideOnDesktop ? "hide-on-desktop" : ""}`}
+              style={{ backgroundColor: hero.backgroundColor }}
             >
-              {section.image && (
-                <img src={section.image} alt={section.title || "Beryl RTW"} />
-              )}
-              <div>
-                <p>{section.eyebrow}</p>
-                <h2>{section.title}</h2>
-                <span>{section.description}</span>
-                <div
-                  className="market-custom-columns"
-                  style={{
-                    gridTemplateColumns: `repeat(${section.columns || 1}, minmax(0, 1fr))`,
-                  }}
-                >
-                  {(section.columnItems?.length
-                    ? section.columnItems
-                    : [
-                        {
-                          heading: "",
-                          text: "",
-                          button: section.cta,
-                          link: section.buttonLink || "#shop",
-                        },
-                      ]
-                  ).map((item, index) => (
-                    <article key={`${section.id}-${index}`}>
-                      {item.heading && <h3>{item.heading}</h3>}
-                      {item.text && <p>{item.text}</p>}
-                      {item.button && (
-                        <button onClick={() => followLink(item.link)}>
-                          {item.button} <ArrowRight size={17} />
-                        </button>
-                      )}
-                    </article>
-                  ))}
+              <div
+                className="market-hero-copy"
+                style={{ color: hero.textColor }}
+              >
+                <p>{hero.eyebrow}</p>
+                <h1>{hero.title}</h1>
+                <span>{hero.description}</span>
+                <button onClick={() => followLink(hero.buttonLink)}>
+                  {hero.cta}
+                </button>
+                <div className="market-hero-proof">
+                  <span>
+                    <b>Secure checkout</b> Reserve on WhatsApp
+                  </span>
+                  <span>
+                    <b>Made in Lagos</b> Worn everywhere
+                  </span>
+                </div>
+              </div>
+              <div className="market-hero-art">
+                <picture>
+                  {hero.mobileImage && (
+                    <source
+                      media="(max-width: 700px)"
+                      srcSet={hero.mobileImage}
+                    />
+                  )}
+                  <img
+                    src={hero.image || defaultHeroImage}
+                    alt="Beryl RTW Ankara collection"
+                  />
+                </picture>
+                <div className="market-hero-sticker">
+                  New
+                  <br />
+                  <em>drop</em>
                 </div>
               </div>
             </section>
-          ))}
-        {discover && (
-          <section
-            className="market-discover-block"
-            style={{
-              backgroundColor: discover.backgroundColor,
-              color: discover.textColor,
-            }}
-          >
-            <DiscoverDeck
-              products={products.filter(
-                (product) => product.status !== "archived",
-              )}
-              onLike={likeFromDiscover}
-              onSkip={(product) => recordSwipe(product, "skip")}
-              onView={setQuickView}
-              onAdd={add}
-            />
-          </section>
+          )
         )}
-        {featureSections.map((section) => (
-          <StorefrontFeatureBlock
-            key={section.id}
-            section={section}
-            onFollow={followLink}
-          />
-        ))}
-        {newsletter && (
-          <section className="market-newsletter">
-            <p>{newsletter.eyebrow}</p>
-            <h2>{newsletter.title}</h2>
-            <span>{newsletter.description}</span>
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                setNotice("You are on the list — welcome to Beryl RTW.");
-                event.currentTarget.reset();
-              }}
+        {!detailProduct && (
+          <>
+            {categories && (
+              <section className="market-categories">
+                <div className="market-section-title">
+                  <div>
+                    <p>{categories.eyebrow}</p>
+                    <h2>{categories.title}</h2>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setFilter("All");
+                      jump("shop");
+                    }}
+                  >
+                    {categories.cta}
+                  </button>
+                </div>
+                <div className="market-category-row">
+                  {types.slice(1).map((type, index) => (
+                    <button
+                      key={type}
+                      onClick={() => {
+                        setFilter(type);
+                        jump("shop");
+                      }}
+                    >
+                      <img
+                        className="market-category-photo"
+                        src={
+                          products.find((product) => product.type === type)
+                            ?.image || defaultHeroImage
+                        }
+                        alt=""
+                        aria-hidden="true"
+                      />
+                      <span className={`market-category-icon cat-${index + 1}`}>
+                        {index === 0
+                          ? "⌁"
+                          : index === 1
+                            ? "✦"
+                            : index === 2
+                              ? "◒"
+                              : "◌"}
+                      </span>
+                      <b>{type}</b>
+                      <small>Shop now</small>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+            <section
+              className="market-trust-row"
+              aria-label="Beryl RTW promises"
             >
-              <input
-                aria-label="Email address"
-                type="email"
-                required
-                placeholder="Your email address"
-              />
-              <button>{newsletter.cta}</button>
-            </form>
-          </section>
-        )}
-        <section
-          className="market-instagram"
-          aria-label="Beryl RTW on Instagram"
-        >
-          <div className="market-instagram-head">
-            <h2>Seen in the wild.</h2>
-            <a href="https://instagram.com" target="_blank" rel="noreferrer">
-              @berylrtw on Instagram
-            </a>
-          </div>
-          <div className="market-instagram-grid">
-            {products.slice(0, 6).map((product) => (
-              <img
-                key={`ig-${product.id}`}
-                src={product.image || defaultHeroImage}
-                alt={product.name}
+              <article>
+                <strong>Premium Ankara</strong>
+                <span>Rich, expressive fabrics selected for lasting wear.</span>
+              </article>
+              <article>
+                <strong>Limited pieces</strong>
+                <span>
+                  Small-batch drops made to feel personal, never mass-made.
+                </span>
+              </article>
+              <article>
+                <strong>Perfect fit</strong>
+                <span>
+                  Thoughtful cuts and an easy fit guide for every silhouette.
+                </span>
+              </article>
+              <article>
+                <strong>Easy returns</strong>
+                <span>Simple support when a piece is not quite right.</span>
+              </article>
+              <article>
+                <strong>Here for you</strong>
+                <span>
+                  Excellent customer care before and after your order.
+                </span>
+              </article>
+            </section>
+            {productSection && (
+              <section className="market-shop" id="shop">
+                <div className="market-section-title">
+                  <div>
+                    <p>{productSection.eyebrow}</p>
+                    <h2>{productSection.title}</h2>
+                    <span>{productSection.description}</span>
+                  </div>
+                  <div className="market-controls">
+                    <button
+                      onClick={() => {
+                        setFilterOpen((value) => !value);
+                        setSortOpen(false);
+                      }}
+                      aria-expanded={filterOpen}
+                    >
+                      <SlidersHorizontal size={15} /> Filter
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSortOpen((value) => !value);
+                        setFilterOpen(false);
+                      }}
+                      aria-expanded={sortOpen}
+                    >
+                      <ChevronDown size={15} /> Sort
+                    </button>
+                  </div>
+                </div>
+                {filterOpen && (
+                  <div className="market-filter-panel">
+                    <label>
+                      Minimum price (₦)
+                      <input
+                        type="number"
+                        min="0"
+                        value={minPrice}
+                        onChange={(event) => setMinPrice(event.target.value)}
+                        placeholder="0"
+                      />
+                    </label>
+                    <label>
+                      Maximum price (₦)
+                      <input
+                        type="number"
+                        min="0"
+                        value={maxPrice}
+                        onChange={(event) => setMaxPrice(event.target.value)}
+                        placeholder="Any"
+                      />
+                    </label>
+                    <label className="market-check">
+                      <input
+                        type="checkbox"
+                        checked={inStockOnly}
+                        onChange={(event) =>
+                          setInStockOnly(event.target.checked)
+                        }
+                      />{" "}
+                      In stock only
+                    </label>
+                    <button
+                      onClick={() => {
+                        resetFilters();
+                        setFilterOpen(false);
+                      }}
+                    >
+                      Clear filters
+                    </button>
+                  </div>
+                )}
+                {sortOpen && (
+                  <div
+                    className="market-sort-panel"
+                    role="listbox"
+                    aria-label="Sort products"
+                  >
+                    {[
+                      { value: "newest", label: "Newest" },
+                      { value: "low", label: "Price: low to high" },
+                      { value: "high", label: "Price: high to low" },
+                      { value: "best", label: "Best-selling" },
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        className={sort === option.value ? "active" : ""}
+                        onClick={() => {
+                          setSort(option.value);
+                          setSortOpen(false);
+                        }}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="market-filter-row">
+                  {types.map((type) => (
+                    <button
+                      className={filter === type ? "active" : ""}
+                      key={type}
+                      onClick={() => setFilter(type)}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+                <div className="market-product-grid">
+                  {visibleProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onAdd={add}
+                      onView={setQuickView}
+                      onDetails={openProductDetails}
+                      onWish={toggleWishlist}
+                      wished={wishlist.includes(product.id)}
+                    />
+                  ))}
+                </div>
+                {!visibleProducts.length && (
+                  <div className="market-empty-results">
+                    <Search size={28} />
+                    <h3>No pieces matched that search.</h3>
+                    <button onClick={resetFilters}>
+                      Clear search and filters
+                    </button>
+                  </div>
+                )}
+              </section>
+            )}
+            {promo && (
+              <section className="market-promo">
+                <div className="market-promo-image">
+                  <img
+                    src={promo.image || defaultHeroImage}
+                    alt="Beryl RTW campaign"
+                    onError={(event) => {
+                      event.currentTarget.src = defaultHeroImage;
+                    }}
+                  />
+                </div>
+                <div>
+                  <p>{promo.eyebrow}</p>
+                  <h2>{promo.title}</h2>
+                  <span>{promo.description}</span>
+                  <button onClick={() => jump("shop")}>{promo.cta}</button>
+                </div>
+              </section>
+            )}
+            {story && (
+              <section className="market-story" id="story">
+                <div>
+                  <p>{story.eyebrow}</p>
+                  <h2>{story.title}</h2>
+                </div>
+                <p>{story.description}</p>
+                <button onClick={() => jump("shop")}>{story.cta}</button>
+              </section>
+            )}
+            {sections
+              .filter(
+                (section) => section.type === "content" && section.visible,
+              )
+              .map((section) => (
+                <section
+                  className={`market-custom-row ${section.layout || "split"}`}
+                  key={section.id}
+                  style={{
+                    backgroundColor: section.backgroundColor || "#f5f1e9",
+                    color: section.textColor || "#10251b",
+                  }}
+                >
+                  {section.image && (
+                    <img
+                      src={section.image}
+                      alt={section.title || "Beryl RTW"}
+                    />
+                  )}
+                  <div>
+                    <p>{section.eyebrow}</p>
+                    <h2>{section.title}</h2>
+                    <span>{section.description}</span>
+                    <div
+                      className="market-custom-columns"
+                      style={{
+                        gridTemplateColumns: `repeat(${section.columns || 1}, minmax(0, 1fr))`,
+                      }}
+                    >
+                      {(section.columnItems?.length
+                        ? section.columnItems
+                        : [
+                            {
+                              heading: "",
+                              text: "",
+                              button: section.cta,
+                              link: section.buttonLink || "#shop",
+                            },
+                          ]
+                      ).map((item, index) => (
+                        <article key={`${section.id}-${index}`}>
+                          {item.heading && <h3>{item.heading}</h3>}
+                          {item.text && <p>{item.text}</p>}
+                          {item.button && (
+                            <button onClick={() => followLink(item.link)}>
+                              {item.button} <ArrowRight size={17} />
+                            </button>
+                          )}
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              ))}
+            {discover && (
+              <section
+                className="market-discover-block"
+                style={{
+                  backgroundColor: discover.backgroundColor,
+                  color: discover.textColor,
+                }}
+              >
+                <DiscoverDeck
+                  products={products.filter(
+                    (product) => product.status !== "archived",
+                  )}
+                  onLike={likeFromDiscover}
+                  onSkip={(product) => recordSwipe(product, "skip")}
+                  onView={setQuickView}
+                  onAdd={add}
+                />
+              </section>
+            )}
+            {featureSections.map((section) => (
+              <StorefrontFeatureBlock
+                key={section.id}
+                section={section}
+                onFollow={followLink}
               />
             ))}
-          </div>
-        </section>
+            {newsletter && (
+              <section className="market-newsletter">
+                <p>{newsletter.eyebrow}</p>
+                <h2>{newsletter.title}</h2>
+                <span>{newsletter.description}</span>
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    setNotice("You are on the list — welcome to Beryl RTW.");
+                    event.currentTarget.reset();
+                  }}
+                >
+                  <input
+                    aria-label="Email address"
+                    type="email"
+                    required
+                    placeholder="Your email address"
+                  />
+                  <button>{newsletter.cta}</button>
+                </form>
+              </section>
+            )}
+            <section
+              className="market-instagram"
+              aria-label="Beryl RTW on Instagram"
+            >
+              <div className="market-instagram-head">
+                <h2>Seen in the wild.</h2>
+                <a
+                  href="https://instagram.com"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  @berylrtw on Instagram
+                </a>
+              </div>
+              <div className="market-instagram-grid">
+                {products.slice(0, 6).map((product) => (
+                  <img
+                    key={`ig-${product.id}`}
+                    src={product.image || defaultHeroImage}
+                    alt={product.name}
+                  />
+                ))}
+              </div>
+            </section>
+          </>
+        )}
       </main>
       <footer className="market-footer">
         <a className="market-brand" href="#top">
@@ -3691,6 +3858,9 @@ function BrandSettings({
   setAnnouncement: (next: string) => void;
 }) {
   const [notice, setNotice] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordSaving, setPasswordSaving] = useState(false);
   const upload = async (file?: File) => {
     if (!file) return;
     if (supabase) {
@@ -3775,6 +3945,60 @@ function BrandSettings({
           >
             Manage admin users <ArrowRight size={15} />
           </a>
+        </article>
+        <article>
+          <p>Security</p>
+          <h2>Change admin password</h2>
+          <span>
+            Choose a new password while you are signed in. Use at least 8
+            characters.
+          </span>
+          <form
+            onSubmit={async (event) => {
+              event.preventDefault();
+              if (!supabase) return;
+              if (newPassword.length < 8) {
+                setNotice("Use at least 8 characters for the new password.");
+                return;
+              }
+              if (newPassword !== confirmPassword) {
+                setNotice("The passwords do not match.");
+                return;
+              }
+              setPasswordSaving(true);
+              const { error } = await supabase.auth.updateUser({
+                password: newPassword,
+              });
+              setPasswordSaving(false);
+              if (error) {
+                setNotice(error.message);
+                return;
+              }
+              setNewPassword("");
+              setConfirmPassword("");
+              setNotice("Admin password changed successfully.");
+            }}
+          >
+            <input
+              type="password"
+              minLength={8}
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+              placeholder="New password"
+              required
+            />
+            <input
+              type="password"
+              minLength={8}
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              placeholder="Confirm new password"
+              required
+            />
+            <button className="merchant-primary" disabled={passwordSaving}>
+              {passwordSaving ? "Saving..." : "Change password"}
+            </button>
+          </form>
         </article>
       </section>
       {notice && <div className="merchant-notice">{notice}</div>}
