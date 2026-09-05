@@ -39,6 +39,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   Store,
+  Trash2,
   Upload,
   Users,
   X,
@@ -59,7 +60,13 @@ type Product = {
   description?: string;
 };
 type SectionKind =
-  "hero" | "categories" | "products" | "promo" | "story" | "newsletter";
+  | "hero"
+  | "categories"
+  | "products"
+  | "promo"
+  | "story"
+  | "newsletter"
+  | "content";
 type StoreSection = {
   id: string;
   type: SectionKind;
@@ -69,7 +76,30 @@ type StoreSection = {
   cta: string;
   visible: boolean;
   theme?: string;
+  image?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  columns?: number;
+  layout?: "split" | "stacked" | "image-left" | "image-right";
+  buttonLink?: string;
+  columnItems?: Array<{
+    heading: string;
+    text: string;
+    button: string;
+    link: string;
+  }>;
 };
+
+const makeColumnItems = (count: number) =>
+  Array.from({ length: count }, (_, index) => ({
+    heading: `Column ${index + 1}`,
+    text: "Add your own content here.",
+    button: index === 0 ? "Explore" : "",
+    link: "#shop",
+  }));
+
+const defaultHeroImage =
+  "https://i.pinimg.com/originals/ae/31/d3/ae31d32476ad40160b2961bc0bd85b48.jpg";
 
 const starterProducts: Product[] = [
   {
@@ -169,6 +199,8 @@ const defaultSections: StoreSection[] = [
     cta: "Shop new arrivals",
     visible: true,
     theme: "cobalt",
+    image: defaultHeroImage,
+    buttonLink: "#shop",
   },
   {
     id: "categories",
@@ -258,6 +290,11 @@ const sectionMeta: Record<
     icon: Users,
     help: "A simple way to build your customer list.",
   },
+  content: {
+    label: "Custom row",
+    icon: Layers3,
+    help: "A flexible row with your own words, image, colour and button.",
+  },
 };
 const getSection = (items: StoreSection[], type: SectionKind) =>
   items.find((item) => item.type === type && item.visible);
@@ -324,7 +361,7 @@ function Storefront({
   const [filter, setFilter] = useState("All");
   const [menuOpen, setMenuOpen] = useState(false);
   const [notice, setNotice] = useState("");
-  const hero = getSection(sections, "hero") || defaultSections[0];
+  const hero = getSection(sections, "hero");
   const categories = getSection(sections, "categories");
   const productSection = getSection(sections, "products");
   const promo = getSection(sections, "promo");
@@ -333,9 +370,10 @@ function Storefront({
   const types = ["All", "Dresses", "Sets", "Tops", "Skirts"];
   const visibleProducts = useMemo(
     () =>
-      filter === "All"
+      (filter === "All"
         ? products
-        : products.filter((product) => product.type === filter),
+        : products.filter((product) => product.type === filter)
+      ).filter((product) => product.status !== "archived"),
     [filter, products],
   );
   const add = (product: Product) => {
@@ -347,6 +385,11 @@ function Storefront({
   const jump = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
     setMenuOpen(false);
+  };
+  const followLink = (link?: string) => {
+    if (!link || link === "#shop") return jump("shop");
+    if (link.startsWith("#")) return jump(link.slice(1));
+    window.location.assign(link);
   };
   const cartTotal = cart.reduce(
     (sum, product) => sum + priceNumber(product.price),
@@ -506,35 +549,40 @@ function Storefront({
         </>
       )}
       <main id="top">
-        <section className="market-hero">
-          <div className="market-hero-copy">
-            <p>{hero.eyebrow}</p>
-            <h1>{hero.title}</h1>
-            <span>{hero.description}</span>
-            <button onClick={() => jump("shop")}>
-              {hero.cta} <ArrowRight size={18} />
-            </button>
-            <div className="market-hero-proof">
-              <span>
-                <b>Secure checkout</b> Reserve on WhatsApp
-              </span>
-              <span>
-                <b>Made in Lagos</b> Worn everywhere
-              </span>
+        {hero && (
+          <section
+            className="market-hero"
+            style={{ backgroundColor: hero.backgroundColor }}
+          >
+            <div className="market-hero-copy" style={{ color: hero.textColor }}>
+              <p>{hero.eyebrow}</p>
+              <h1>{hero.title}</h1>
+              <span>{hero.description}</span>
+              <button onClick={() => followLink(hero.buttonLink)}>
+                {hero.cta} <ArrowRight size={18} />
+              </button>
+              <div className="market-hero-proof">
+                <span>
+                  <b>Secure checkout</b> Reserve on WhatsApp
+                </span>
+                <span>
+                  <b>Made in Lagos</b> Worn everywhere
+                </span>
+              </div>
             </div>
-          </div>
-          <div className="market-hero-art">
-            <img
-              src="https://i.pinimg.com/originals/ae/31/d3/ae31d32476ad40160b2961bc0bd85b48.jpg"
-              alt="Beryl RTW Ankara set"
-            />
-            <div className="market-hero-sticker">
-              New
-              <br />
-              <em>drop</em>
+            <div className="market-hero-art">
+              <img
+                src={hero.image || defaultHeroImage}
+                alt="Beryl RTW Ankara collection"
+              />
+              <div className="market-hero-sticker">
+                New
+                <br />
+                <em>drop</em>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
         {categories && (
           <section className="market-categories">
             <div className="market-section-title">
@@ -644,6 +692,55 @@ function Storefront({
             </button>
           </section>
         )}
+        {sections
+          .filter((section) => section.type === "content" && section.visible)
+          .map((section) => (
+            <section
+              className={`market-custom-row ${section.layout || "split"}`}
+              key={section.id}
+              style={{
+                backgroundColor: section.backgroundColor || "#f5f1e9",
+                color: section.textColor || "#10251b",
+              }}
+            >
+              {section.image && (
+                <img src={section.image} alt={section.title || "Beryl RTW"} />
+              )}
+              <div>
+                <p>{section.eyebrow}</p>
+                <h2>{section.title}</h2>
+                <span>{section.description}</span>
+                <div
+                  className="market-custom-columns"
+                  style={{
+                    gridTemplateColumns: `repeat(${section.columns || 1}, minmax(0, 1fr))`,
+                  }}
+                >
+                  {(section.columnItems?.length
+                    ? section.columnItems
+                    : [
+                        {
+                          heading: "",
+                          text: "",
+                          button: section.cta,
+                          link: section.buttonLink || "#shop",
+                        },
+                      ]
+                  ).map((item, index) => (
+                    <article key={`${section.id}-${index}`}>
+                      {item.heading && <h3>{item.heading}</h3>}
+                      {item.text && <p>{item.text}</p>}
+                      {item.button && (
+                        <button onClick={() => followLink(item.link)}>
+                          {item.button} <ArrowRight size={17} />
+                        </button>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </section>
+          ))}
         {newsletter && (
           <section className="market-newsletter">
             <p>{newsletter.eyebrow}</p>
@@ -771,12 +868,14 @@ function StorefrontBuilder({
   );
   const selected =
     sections.find((section) => section.id === selectedId) || sections[0];
-  const updateSection = (patch: Partial<StoreSection>) =>
+  const updateSection = (patch: Partial<StoreSection>) => {
+    if (!selected) return;
     onChange(
       sections.map((section) =>
         section.id === selected.id ? { ...section, ...patch } : section,
       ),
     );
+  };
   const reorder = ({ active, over }: DragEndEvent) => {
     if (!over || active.id === over.id) return;
     const oldIndex = sections.findIndex((section) => section.id === active.id);
@@ -795,9 +894,38 @@ function StorefrontBuilder({
       cta: "Learn more",
       visible: true,
       theme: "cream",
+      columns: type === "content" ? 2 : undefined,
+      columnItems: type === "content" ? makeColumnItems(2) : undefined,
+      layout: type === "content" ? "split" : undefined,
+      buttonLink: "#shop",
     };
     onChange([...sections, section]);
     setSelectedId(id);
+  };
+  const removeSelected = () => {
+    if (!selected) return;
+    const remaining = sections.filter((section) => section.id !== selected.id);
+    onChange(remaining);
+    setSelectedId(remaining[0]?.id || "");
+  };
+  const uploadSectionImage = async (file?: File) => {
+    if (!file || !selected) return;
+    if (supabase) {
+      const path = `storefront/${Date.now()}-${file.name.replace(/[^a-z0-9.]+/gi, "-")}`;
+      const { error } = await supabase.storage
+        .from("brand-assets")
+        .upload(path, file);
+      if (error) {
+        window.alert(`Photo upload failed: ${error.message}`);
+        return;
+      }
+      const { data } = supabase.storage.from("brand-assets").getPublicUrl(path);
+      updateSection({ image: data.publicUrl });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => updateSection({ image: String(reader.result) });
+    reader.readAsDataURL(file);
   };
   return (
     <div className="builder-layout">
@@ -844,19 +972,15 @@ function StorefrontBuilder({
         <div className="builder-add">
           <p>Add a block</p>
           <div>
-            {(Object.keys(sectionMeta) as SectionKind[])
-              .filter(
-                (type) => !sections.some((section) => section.type === type),
-              )
-              .map((type) => {
-                const Icon = sectionMeta[type].icon;
-                return (
-                  <button key={type} onClick={() => addSection(type)}>
-                    <Plus size={14} />
-                    <Icon size={15} /> {sectionMeta[type].label}
-                  </button>
-                );
-              })}
+            {(Object.keys(sectionMeta) as SectionKind[]).map((type) => {
+              const Icon = sectionMeta[type].icon;
+              return (
+                <button key={type} onClick={() => addSection(type)}>
+                  <Plus size={14} />
+                  <Icon size={15} /> {sectionMeta[type].label}
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -900,9 +1024,20 @@ function StorefrontBuilder({
                 className={`builder-preview-block ${section.type} ${section.id === selectedId ? "active" : ""}`}
                 key={section.id}
                 onClick={() => setSelectedId(section.id)}
+                style={{
+                  backgroundColor: section.backgroundColor,
+                  color: section.textColor,
+                }}
               >
                 {section.type === "hero" && (
                   <>
+                    {section.image && (
+                      <img
+                        className="builder-preview-hero-image"
+                        src={section.image}
+                        alt="Hero preview"
+                      />
+                    )}
                     <small>{section.eyebrow}</small>
                     <h2>{section.title}</h2>
                     <p>{section.description}</p>
@@ -957,6 +1092,31 @@ function StorefrontBuilder({
                     <i className="builder-preview-input" />
                   </>
                 )}
+                {section.type === "content" && (
+                  <>
+                    {section.image && (
+                      <img
+                        className="builder-preview-content-image"
+                        src={section.image}
+                        alt="Content preview"
+                      />
+                    )}
+                    <small>{section.eyebrow}</small>
+                    <h2>{section.title}</h2>
+                    <p>{section.description}</p>
+                    <div
+                      className="builder-preview-columns"
+                      data-columns={section.columns || 2}
+                    >
+                      {Array.from({ length: section.columns || 2 }).map(
+                        (_, index) => (
+                          <i key={index} />
+                        ),
+                      )}
+                    </div>
+                    {section.cta && <span>{section.cta}</span>}
+                  </>
+                )}
               </button>
             ))}
         </div>
@@ -973,6 +1133,18 @@ function StorefrontBuilder({
                 onClick={() => updateSection({ visible: !selected.visible })}
               >
                 {selected.visible ? "Hide" : "Show"}
+              </button>
+              <button
+                className="builder-delete"
+                onClick={() => {
+                  if (
+                    window.confirm("Remove this block from the landing page?")
+                  ) {
+                    removeSelected();
+                  }
+                }}
+              >
+                <Trash2 size={15} /> Remove
               </button>
             </div>
             <label>
@@ -1005,16 +1177,192 @@ function StorefrontBuilder({
               />
             </label>
             {!["story", "newsletter"].includes(selected.type) && (
+              <>
+                <label>
+                  Button label
+                  <input
+                    value={selected.cta}
+                    onChange={(event) =>
+                      updateSection({ cta: event.target.value })
+                    }
+                  />
+                </label>
+                <label>
+                  Button link
+                  <input
+                    value={selected.buttonLink || "#shop"}
+                    onChange={(event) =>
+                      updateSection({ buttonLink: event.target.value })
+                    }
+                    placeholder="#shop or https://..."
+                  />
+                </label>
+              </>
+            )}
+            <label className="builder-photo-control">
+              {selected.type === "hero" ? "Large hero photo" : "Section photo"}
+              {selected.image && (
+                <img src={selected.image} alt="Section preview" />
+              )}
+              <span>
+                <Upload size={15} /> Upload or replace photo
+              </span>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(event) =>
+                  uploadSectionImage(event.target.files?.[0])
+                }
+              />
+            </label>
+            <label>
+              Photo link
+              <input
+                value={selected.image || ""}
+                onChange={(event) =>
+                  updateSection({ image: event.target.value })
+                }
+                placeholder="Paste an image link"
+              />
+            </label>
+            {selected.type === "content" && (
+              <>
+                <label>
+                  Row layout
+                  <select
+                    value={selected.layout || "split"}
+                    onChange={(event) =>
+                      updateSection({
+                        layout: event.target.value as StoreSection["layout"],
+                      })
+                    }
+                  >
+                    <option value="split">Text and image</option>
+                    <option value="image-left">Image on the left</option>
+                    <option value="image-right">Image on the right</option>
+                    <option value="stacked">Stacked on mobile</option>
+                  </select>
+                </label>
+                <label>
+                  Columns
+                  <select
+                    value={selected.columns || 2}
+                    onChange={(event) => {
+                      const count = Number(event.target.value);
+                      const current =
+                        selected.columnItems ||
+                        makeColumnItems(selected.columns || 2);
+                      updateSection({
+                        columns: count,
+                        columnItems: [
+                          ...current,
+                          ...makeColumnItems(count),
+                        ].slice(0, count),
+                      });
+                    }}
+                  >
+                    <option value="1">1 column</option>
+                    <option value="2">2 columns</option>
+                    <option value="3">3 columns</option>
+                    <option value="4">4 columns</option>
+                  </select>
+                </label>
+                <div className="builder-column-editor">
+                  <b>Edit each column</b>
+                  {(
+                    selected.columnItems ||
+                    makeColumnItems(selected.columns || 2)
+                  ).map((column, index) => (
+                    <fieldset key={index}>
+                      <legend>Column {index + 1}</legend>
+                      <input
+                        value={column.heading}
+                        onChange={(event) => {
+                          const items = [
+                            ...(selected.columnItems ||
+                              makeColumnItems(selected.columns || 2)),
+                          ];
+                          items[index] = {
+                            ...items[index],
+                            heading: event.target.value,
+                          };
+                          updateSection({ columnItems: items });
+                        }}
+                        placeholder="Column heading"
+                      />
+                      <textarea
+                        rows={2}
+                        value={column.text}
+                        onChange={(event) => {
+                          const items = [
+                            ...(selected.columnItems ||
+                              makeColumnItems(selected.columns || 2)),
+                          ];
+                          items[index] = {
+                            ...items[index],
+                            text: event.target.value,
+                          };
+                          updateSection({ columnItems: items });
+                        }}
+                        placeholder="Column text"
+                      />
+                      <input
+                        value={column.button}
+                        onChange={(event) => {
+                          const items = [
+                            ...(selected.columnItems ||
+                              makeColumnItems(selected.columns || 2)),
+                          ];
+                          items[index] = {
+                            ...items[index],
+                            button: event.target.value,
+                          };
+                          updateSection({ columnItems: items });
+                        }}
+                        placeholder="Button label (optional)"
+                      />
+                      <input
+                        value={column.link}
+                        onChange={(event) => {
+                          const items = [
+                            ...(selected.columnItems ||
+                              makeColumnItems(selected.columns || 2)),
+                          ];
+                          items[index] = {
+                            ...items[index],
+                            link: event.target.value,
+                          };
+                          updateSection({ columnItems: items });
+                        }}
+                        placeholder="#shop or https://..."
+                      />
+                    </fieldset>
+                  ))}
+                </div>
+              </>
+            )}
+            <div className="builder-colour-grid">
               <label>
-                Button label
+                Background colour
                 <input
-                  value={selected.cta}
+                  type="color"
+                  value={selected.backgroundColor || "#f5f1e9"}
                   onChange={(event) =>
-                    updateSection({ cta: event.target.value })
+                    updateSection({ backgroundColor: event.target.value })
                   }
                 />
               </label>
-            )}
+              <label>
+                Text colour
+                <input
+                  type="color"
+                  value={selected.textColor || "#10251b"}
+                  onChange={(event) =>
+                    updateSection({ textColor: event.target.value })
+                  }
+                />
+              </label>
+            </div>
             <label>
               Colour mood
               <select
@@ -1047,10 +1395,12 @@ function ProductEditor({
   product,
   onClose,
   onSave,
+  onArchive,
 }: {
   product: Product;
   onClose: () => void;
   onSave: (product: Product) => Promise<void>;
+  onArchive: (product: Product) => Promise<void>;
 }) {
   const [draft, setDraft] = useState(product);
   const [saving, setSaving] = useState(false);
@@ -1152,6 +1502,7 @@ function ProductEditor({
               <option value="active">Active</option>
               <option value="draft">Draft</option>
               <option value="sold-out">Sold out</option>
+              <option value="archived">Archived</option>
             </select>
           </label>
           <label>
@@ -1209,9 +1560,28 @@ function ProductEditor({
             onChange={(event) => update("description", event.target.value)}
           />
         </label>
-        <button className="editor-save" disabled={saving}>
-          {saving ? "Saving…" : "Save product"} <ArrowRight size={17} />
-        </button>
+        <div className="editor-actions">
+          {product.name && product.status !== "archived" && (
+            <button
+              className="editor-delete"
+              type="button"
+              disabled={saving}
+              onClick={async () => {
+                if (!window.confirm(`Remove ${product.name} from the store?`))
+                  return;
+                setSaving(true);
+                await onArchive(product);
+                setSaving(false);
+                onClose();
+              }}
+            >
+              <Trash2 size={16} /> Remove from store
+            </button>
+          )}
+          <button className="editor-save" disabled={saving}>
+            {saving ? "Saving…" : "Save product"} <ArrowRight size={17} />
+          </button>
+        </div>
       </form>
     </div>
   );
@@ -1220,16 +1590,22 @@ function ProductEditor({
 function ProductManager({
   products,
   onSave,
+  onArchive,
 }: {
   products: Product[];
   onSave: (product: Product) => Promise<void>;
+  onArchive: (product: Product) => Promise<void>;
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All products");
   const [editing, setEditing] = useState<Product | null>(null);
   const filtered = products.filter(
     (product) =>
-      (filter === "All products" || product.type === filter) &&
+      (filter === "All products"
+        ? product.status !== "archived"
+        : filter === "Archived"
+          ? product.status === "archived"
+          : product.type === filter) &&
       product.name.toLowerCase().includes(query.toLowerCase()),
   );
   const newProduct = (): Product => ({
@@ -1270,7 +1646,14 @@ function ProductManager({
           />
         </div>
         <div>
-          {["All products", "Dresses", "Sets", "Tops", "Skirts"].map((item) => (
+          {[
+            "All products",
+            "Dresses",
+            "Sets",
+            "Tops",
+            "Skirts",
+            "Archived",
+          ].map((item) => (
             <button
               key={item}
               className={filter === item ? "active" : ""}
@@ -1285,7 +1668,13 @@ function ProductManager({
         {filtered.map((product) => (
           <article key={product.id}>
             <div>
-              <img src={product.image} alt={product.name} />
+              <img
+                src={product.image || defaultHeroImage}
+                alt={product.name}
+                onError={(event) => {
+                  event.currentTarget.src = defaultHeroImage;
+                }}
+              />
               <span
                 className={
                   product.status === "active" ? "status-live" : "status-draft"
@@ -1323,6 +1712,7 @@ function ProductManager({
           product={editing}
           onClose={() => setEditing(null)}
           onSave={onSave}
+          onArchive={onArchive}
         />
       )}
     </>
@@ -1350,7 +1740,7 @@ function Dashboard({
         </div>
         <button
           className="merchant-secondary"
-          onClick={() => onNavigate("Storefront")}
+          onClick={() => onNavigate("Landing page")}
         >
           <Eye size={17} /> View storefront
         </button>
@@ -1388,7 +1778,7 @@ function Dashboard({
               Use the visual builder to move sections around—no code, no
               developer required.
             </span>
-            <button onClick={() => onNavigate("Storefront")}>
+            <button onClick={() => onNavigate("Landing page")}>
               Open page builder <ArrowRight size={16} />
             </button>
           </div>
@@ -1589,6 +1979,16 @@ function MerchantAdmin({
     );
     if (supabase) await supabase.from("products").upsert(product);
   };
+  const archiveProduct = async (product: Product) => {
+    const archived = { ...product, status: "archived" };
+    setProducts((current) =>
+      current.map((item) => (item.id === product.id ? archived : item)),
+    );
+    if (supabase) {
+      const { error } = await supabase.from("products").upsert(archived);
+      if (error) throw error;
+    }
+  };
   const saveLayout = async () => {
     localStorage.setItem("beryl-storefront-layout", JSON.stringify(sections));
     if (supabase)
@@ -1599,7 +1999,7 @@ function MerchantAdmin({
   const nav = [
     { label: "Dashboard", icon: LayoutDashboard },
     { label: "Products", icon: Package },
-    { label: "Storefront", icon: Layers3 },
+    { label: "Landing page", icon: Layers3 },
     { label: "Orders", icon: ClipboardList },
     { label: "Customers", icon: Users },
     { label: "Marketing", icon: Megaphone },
@@ -1671,14 +2071,18 @@ function MerchantAdmin({
           <Dashboard products={products} onNavigate={setPage} />
         )}
         {page === "Products" && (
-          <ProductManager products={products} onSave={saveProduct} />
+          <ProductManager
+            products={products}
+            onSave={saveProduct}
+            onArchive={archiveProduct}
+          />
         )}
-        {page === "Storefront" && (
+        {page === "Landing page" && (
           <>
             <div className="merchant-page-head builder-page-head">
               <div>
                 <p>Visual editor</p>
-                <h1>Design your storefront</h1>
+                <h1>Design your landing page</h1>
                 <span>
                   Arrange the homepage, edit the content and publish it
                   yourself.
