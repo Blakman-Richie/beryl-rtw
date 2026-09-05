@@ -1072,6 +1072,14 @@ function Storefront({
           ? products.find((product) => product.id === Number(match[1])) || null
           : null,
       );
+      const categoryMatch =
+        window.location.pathname.match(/^\/category\/([^/]+)/);
+      if (categoryMatch) {
+        const category = categoryMatch[1].replace(/-/g, " ");
+        setFilter(category.charAt(0).toUpperCase() + category.slice(1));
+      } else if (!match) {
+        setFilter("All");
+      }
     };
     window.addEventListener("popstate", syncRoute);
     syncRoute();
@@ -1122,6 +1130,19 @@ function Storefront({
     window.history.pushState({}, "", `/products/${product.id}`);
     setDetailProduct(product);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  const openCategory = (type: string) => {
+    setDetailProduct(null);
+    setFilter(type);
+    window.history.pushState(
+      {},
+      "",
+      type === "All"
+        ? "/"
+        : `/category/${type.toLowerCase().replace(/\s+/g, "-")}`,
+    );
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.setTimeout(() => jump("shop"), 80);
   };
   const closeProductDetails = () => {
     window.history.pushState({}, "", "/");
@@ -1245,7 +1266,7 @@ function Storefront({
         >
           <Menu size={22} />
         </button>
-        <a className="market-brand" href="#top">
+        <a className="market-brand" href="/">
           {logo ? (
             <img src={logo} alt="Beryl RTW" />
           ) : (
@@ -1324,27 +1345,24 @@ function Storefront({
         </aside>
       )}
       <nav className={menuOpen ? "market-nav open" : "market-nav"}>
-        <button onClick={() => jump("shop")}>Shop all</button>
+        <button onClick={() => openCategory("All")}>Shop all</button>
         <button
           onClick={() => {
-            setFilter("Dresses");
-            jump("shop");
+            openCategory("Dresses");
           }}
         >
           Dresses
         </button>
         <button
           onClick={() => {
-            setFilter("Sets");
-            jump("shop");
+            openCategory("Sets");
           }}
         >
           Two-piece sets
         </button>
         <button
           onClick={() => {
-            setFilter("Tops");
-            jump("shop");
+            openCategory("Tops");
           }}
         >
           Tops
@@ -1594,8 +1612,7 @@ function Storefront({
                   </div>
                   <button
                     onClick={() => {
-                      setFilter("All");
-                      jump("shop");
+                      openCategory("All");
                     }}
                   >
                     {categories.cta}
@@ -1606,8 +1623,7 @@ function Storefront({
                     <button
                       key={type}
                       onClick={() => {
-                        setFilter(type);
-                        jump("shop");
+                        openCategory(type);
                       }}
                     >
                       <img
@@ -1956,7 +1972,7 @@ function Storefront({
         )}
       </main>
       <footer className="market-footer">
-        <a className="market-brand" href="#top">
+        <a className="market-brand" href="/">
           {logo ? (
             <img src={logo} alt="Beryl RTW" />
           ) : (
