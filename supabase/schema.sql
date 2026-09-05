@@ -33,8 +33,11 @@ alter table public.brand_settings add column if not exists announcement text;
 create table if not exists public.storefront_layout (
   id integer primary key default 1 check (id = 1),
   sections jsonb not null default '[]'::jsonb,
+  about_sections jsonb not null default '[]'::jsonb,
   updated_at timestamptz not null default now()
 );
+alter table public.storefront_layout
+  add column if not exists about_sections jsonb not null default '[]'::jsonb;
 
 alter table public.storefront_layout enable row level security;
 create policy "Anyone can view storefront layout" on public.storefront_layout for select using (true);

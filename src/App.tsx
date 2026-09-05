@@ -278,6 +278,7 @@ const defaultSections: StoreSection[] = [
     cta: "Discover the story",
     visible: true,
     theme: "lime",
+    buttonLink: "/about",
   },
   {
     id: "story",
@@ -296,6 +297,106 @@ const defaultSections: StoreSection[] = [
     title: "New drops. No noise.",
     eyebrow: "Stay close",
     description: "Get the collection first, plus styling notes from Beryl.",
+    cta: "Join the list",
+    visible: true,
+    theme: "ink",
+  },
+];
+
+const defaultAboutSections: StoreSection[] = [
+  {
+    id: "about-hero",
+    type: "hero",
+    title: "More than a print. A point of view.",
+    eyebrow: "Meet Beryl RTW",
+    description:
+      "Beryl RTW creates elevated Ankara ready-to-wear for women who want colour, confidence and effortless polish in every room.",
+    cta: "Shop the collection",
+    visible: true,
+    theme: "cobalt",
+    image: defaultHeroImage,
+    buttonLink: "/",
+    layout: "image-right",
+  },
+  {
+    id: "about-belief",
+    type: "content",
+    title: "Colour, cut, confidence.",
+    eyebrow: "What we believe",
+    description:
+      "Ankara is a language of joy. We translate its boldest rhythms into thoughtful silhouettes that move with real life.",
+    cta: "Shop new arrivals",
+    buttonLink: "/",
+    visible: true,
+    theme: "lime",
+    image:
+      "https://images.ctfassets.net/7bobsix9kke6/1D4OA5xtYKxbHYJYfMNkau/7a9b9d04b2495bb296a8776605bd1d5e/stylegoestochurch_91806993_151752566367367_4535886086198977974_n.jpg",
+    columns: 3,
+    layout: "split",
+    columnItems: [
+      {
+        heading: "Made in Lagos",
+        text: "Designed with a distinctly Nigerian eye for colour, detail and occasion.",
+        button: "",
+        link: "#",
+      },
+      {
+        heading: "Ready to live in",
+        text: "Pieces that work for the office, Sunday plans, dinner and the days between.",
+        button: "",
+        link: "#",
+      },
+      {
+        heading: "Small-batch by design",
+        text: "Limited runs keep every print considered and every wardrobe personal.",
+        button: "",
+        link: "#",
+      },
+    ],
+  },
+  {
+    id: "about-story",
+    type: "story",
+    title: "Designed for the many places you go.",
+    eyebrow: "The Beryl woman",
+    description:
+      "From Lagos to London and everywhere in between, Beryl RTW is a wardrobe of expressive pieces made to meet your life beautifully.",
+    cta: "Explore the edit",
+    buttonLink: "/",
+    visible: true,
+    theme: "paper",
+  },
+  {
+    id: "about-testimonials",
+    type: "testimonials",
+    title: "Worn, loved, lived in.",
+    eyebrow: "Notes from our community",
+    description: "The best part of Beryl is seeing each piece become her own.",
+    cta: "Find your piece",
+    buttonLink: "/",
+    visible: true,
+    theme: "cream",
+    contentItems: [
+      {
+        heading: "Amara, Lagos",
+        text: "The fit was beautiful and the fabric looked even better in person.",
+      },
+      {
+        heading: "Kemi, London",
+        text: "A real statement piece that still felt easy enough for every day.",
+      },
+      {
+        heading: "Dami, Abuja",
+        text: "My order arrived neatly packed and exactly as pictured.",
+      },
+    ],
+  },
+  {
+    id: "about-newsletter",
+    type: "newsletter",
+    title: "Stay close to the studio.",
+    eyebrow: "New drops · styling notes",
+    description: "Get first access to new Ankara edits and stories from Beryl.",
     cta: "Join the list",
     visible: true,
     theme: "ink",
@@ -387,6 +488,30 @@ const sectionIsLive = (item: StoreSection) =>
   (!item.scheduledAt || new Date(item.scheduledAt).getTime() <= Date.now());
 const getSection = (items: StoreSection[], type: SectionKind) =>
   items.find((item) => item.type === type && sectionIsLive(item));
+const aboutCarrierId = "__about_page__";
+const stripAboutCarrier = (items: StoreSection[]) =>
+  items.filter((item) => item.id !== aboutCarrierId);
+const decodeAboutCarrier = (items: StoreSection[]) => {
+  const carrier = items.find((item) => item.id === aboutCarrierId);
+  if (!carrier?.images?.[0]) return null;
+  try {
+    const parsed = JSON.parse(carrier.images[0]);
+    return Array.isArray(parsed) ? (parsed as StoreSection[]) : null;
+  } catch {
+    return null;
+  }
+};
+const makeAboutCarrier = (items: StoreSection[]): StoreSection => ({
+  id: aboutCarrierId,
+  type: "content",
+  title: "About page data",
+  eyebrow: "System data",
+  description:
+    "Stores the About page layout when the optional page column is unavailable.",
+  cta: "",
+  visible: false,
+  images: [JSON.stringify(items)],
+});
 const priceNumber = (value: string) =>
   Number(value.replace(/[^0-9]/g, "")) || 0;
 function IconButton({
@@ -1040,14 +1165,275 @@ function StorefrontFeatureBlock({
   );
 }
 
+function AboutPage({
+  sections,
+  products,
+  onBack,
+  onFollow,
+  onCategory,
+  onAdd,
+  onDetails,
+  onWish,
+  wishlist,
+}: {
+  sections: StoreSection[];
+  products: Product[];
+  onBack: () => void;
+  onFollow: (link?: string) => void;
+  onCategory: (type: string) => void;
+  onAdd: (product: Product) => void;
+  onDetails: (product: Product) => void;
+  onWish: (product: Product) => void;
+  wishlist: number[];
+}) {
+  const [submitted, setSubmitted] = useState(false);
+  const liveSections = sections.filter(sectionIsLive);
+  const hero = liveSections.find((section) => section.type === "hero");
+  const bodySections = liveSections.filter(
+    (section) => section.id !== hero?.id,
+  );
+  const activeProducts = products.filter(
+    (product) => product.status !== "archived",
+  );
+  return (
+    <div className="market-about-page">
+      <div className="market-about-topline">
+        <button onClick={onBack}>
+          <ChevronLeft size={16} /> Back to shop
+        </button>
+        <span>About Beryl RTW</span>
+      </div>
+      {hero ? (
+        <section
+          className={`market-hero market-about-hero ${hero.layout || "image-right"}`}
+          style={{ backgroundColor: hero.backgroundColor }}
+        >
+          <div className="market-hero-copy" style={{ color: hero.textColor }}>
+            <p>{hero.eyebrow}</p>
+            <h1>{hero.title}</h1>
+            <span>{hero.description}</span>
+            {hero.cta && (
+              <button onClick={() => onFollow(hero.buttonLink || "/")}>
+                {hero.cta} <ArrowRight size={16} />
+              </button>
+            )}
+          </div>
+          <div className="market-hero-art">
+            <img
+              src={hero.image || defaultHeroImage}
+              alt="Beryl RTW Ankara ready-to-wear"
+            />
+          </div>
+        </section>
+      ) : (
+        <section className="market-about-empty">
+          <p>Meet Beryl RTW</p>
+          <h1>Our story is still being written.</h1>
+          <button onClick={onBack}>Shop the collection</button>
+        </section>
+      )}
+      {bodySections.map((section) => {
+        if (section.type === "categories")
+          return (
+            <section
+              className="market-categories market-about-categories"
+              key={section.id}
+            >
+              <div className="market-section-title">
+                <div>
+                  <p>{section.eyebrow}</p>
+                  <h2>{section.title}</h2>
+                  <span>{section.description}</span>
+                </div>
+              </div>
+              <div className="market-category-row">
+                {["Dresses", "Sets", "Tops", "Skirts", "Jumpsuits"].map(
+                  (type, index) => (
+                    <button key={type} onClick={() => onCategory(type)}>
+                      <img
+                        className="market-category-photo"
+                        src={
+                          products.find((product) => product.type === type)
+                            ?.image || defaultHeroImage
+                        }
+                        alt=""
+                        aria-hidden="true"
+                      />
+                      <b>{type}</b>
+                      <small>Shop now</small>
+                    </button>
+                  ),
+                )}
+              </div>
+            </section>
+          );
+        if (section.type === "products")
+          return (
+            <section className="market-shop market-about-shop" key={section.id}>
+              <div className="market-section-title">
+                <div>
+                  <p>{section.eyebrow}</p>
+                  <h2>{section.title}</h2>
+                  <span>{section.description}</span>
+                </div>
+              </div>
+              <div className="market-product-grid">
+                {activeProducts.slice(0, 4).map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onAdd={onAdd}
+                    onView={onDetails}
+                    onDetails={onDetails}
+                    onWish={onWish}
+                    wished={wishlist.includes(product.id)}
+                  />
+                ))}
+              </div>
+            </section>
+          );
+        if (section.type === "promo")
+          return (
+            <section className="market-promo" key={section.id}>
+              <div className="market-promo-image">
+                <img
+                  src={section.image || defaultHeroImage}
+                  alt="Beryl RTW campaign"
+                />
+              </div>
+              <div>
+                <p>{section.eyebrow}</p>
+                <h2>{section.title}</h2>
+                <span>{section.description}</span>
+                {section.cta && (
+                  <button onClick={() => onFollow(section.buttonLink || "/")}>
+                    {section.cta} <ArrowRight size={16} />
+                  </button>
+                )}
+              </div>
+            </section>
+          );
+        if (section.type === "story")
+          return (
+            <section
+              className="market-story market-about-story"
+              key={section.id}
+              style={{
+                backgroundColor: section.backgroundColor,
+                color: section.textColor,
+              }}
+            >
+              <div>
+                <p>{section.eyebrow}</p>
+                <h2>{section.title}</h2>
+              </div>
+              <p>{section.description}</p>
+              {section.cta && (
+                <button onClick={() => onFollow(section.buttonLink || "/")}>
+                  {section.cta} <ArrowRight size={16} />
+                </button>
+              )}
+            </section>
+          );
+        if (section.type === "content")
+          return (
+            <section
+              className={`market-custom-row ${section.layout || "split"}`}
+              key={section.id}
+              style={{
+                backgroundColor: section.backgroundColor || "#f5f1e9",
+                color: section.textColor || "#10251b",
+              }}
+            >
+              {section.image && (
+                <img src={section.image} alt={section.title || "Beryl RTW"} />
+              )}
+              <div>
+                <p>{section.eyebrow}</p>
+                <h2>{section.title}</h2>
+                <span>{section.description}</span>
+                <div
+                  className="market-custom-columns"
+                  style={{
+                    gridTemplateColumns: `repeat(${section.columns || 1}, minmax(0, 1fr))`,
+                  }}
+                >
+                  {(section.columnItems || []).map((item, index) => (
+                    <article key={`${section.id}-${index}`}>
+                      {item.heading && <h3>{item.heading}</h3>}
+                      {item.text && <p>{item.text}</p>}
+                      {item.button && (
+                        <button onClick={() => onFollow(item.link)}>
+                          {item.button} <ArrowRight size={16} />
+                        </button>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+        if (section.type === "newsletter")
+          return (
+            <section className="market-newsletter" key={section.id}>
+              <p>{section.eyebrow}</p>
+              <h2>{section.title}</h2>
+              <span>{section.description}</span>
+              {submitted ? (
+                <strong>You're on the list — welcome to Beryl RTW.</strong>
+              ) : (
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    setSubmitted(true);
+                  }}
+                >
+                  <input
+                    aria-label="Email address"
+                    type="email"
+                    required
+                    placeholder="Your email address"
+                  />
+                  <button>{section.cta || "Join the list"}</button>
+                </form>
+              )}
+            </section>
+          );
+        if (
+          [
+            "discover",
+            "testimonials",
+            "video",
+            "gallery",
+            "faq",
+            "countdown",
+            "size-guide",
+            "journal",
+          ].includes(section.type)
+        )
+          return (
+            <StorefrontFeatureBlock
+              key={section.id}
+              section={section}
+              onFollow={onFollow}
+            />
+          );
+        return null;
+      })}
+    </div>
+  );
+}
+
 function Storefront({
   products,
   sections,
+  aboutSections,
   logo,
   announcement,
 }: {
   products: Product[];
   sections: StoreSection[];
+  aboutSections: StoreSection[];
   logo: string;
   announcement: string;
 }) {
@@ -1083,6 +1469,9 @@ function Storefront({
     const category = match[1].replace(/-/g, " ");
     return category.charAt(0).toUpperCase() + category.slice(1);
   });
+  const [aboutRoute, setAboutRoute] = useState(() =>
+    ["/about", "/our-story"].includes(window.location.pathname),
+  );
   const [discoverOpen, setDiscoverOpen] = useState(false);
   const [visitorSessionId] = useState(() => {
     const existing = localStorage.getItem("beryl-visitor-session");
@@ -1143,10 +1532,17 @@ function Storefront({
           category.charAt(0).toUpperCase() + category.slice(1);
         setCategoryRoute(nextCategory);
         setFilter(nextCategory);
+        setAboutRoute(false);
+      } else if (["/about", "/our-story"].includes(window.location.pathname)) {
+        setAboutRoute(true);
+        setDetailProduct(null);
+        setCategoryRoute(null);
       } else if (!match) {
+        setAboutRoute(false);
         setCategoryRoute(null);
         setFilter("All");
       } else {
+        setAboutRoute(false);
         setCategoryRoute(null);
       }
     };
@@ -1192,16 +1588,30 @@ function Storefront({
   };
   const followLink = (link?: string) => {
     if (!link || link === "#shop") return jump("shop");
+    if (["/about", "/our-story", "about", "our-story"].includes(link)) {
+      openAbout();
+      return;
+    }
     if (link.startsWith("#")) return jump(link.slice(1));
     window.location.assign(link);
   };
+  const openAbout = () => {
+    setDetailProduct(null);
+    setCategoryRoute(null);
+    setAboutRoute(true);
+    window.history.pushState({}, "", "/about");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setMenuOpen(false);
+  };
   const openProductDetails = (product: Product) => {
+    setAboutRoute(false);
     setCategoryRoute(null);
     window.history.pushState({}, "", `/products/${product.id}`);
     setDetailProduct(product);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const openCategory = (type: string) => {
+    setAboutRoute(false);
     setDetailProduct(null);
     setCategoryRoute(type === "All" ? null : type);
     setFilter(type);
@@ -1219,6 +1629,13 @@ function Storefront({
     window.history.pushState({}, "", "/");
     setDetailProduct(null);
     setCategoryRoute(null);
+    setAboutRoute(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  const closeAbout = () => {
+    window.history.pushState({}, "", "/");
+    setAboutRoute(false);
+    setFilter("All");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const toggleWishlist = (product: Product) => {
@@ -1446,7 +1863,7 @@ function Storefront({
         >
           Tops
         </button>
-        <button onClick={() => jump("story")}>Our story</button>
+        <button onClick={openAbout}>Our story</button>
         <button className="market-nav-sale" onClick={() => jump("shop")}>
           New drop
         </button>
@@ -1615,7 +2032,19 @@ function Storefront({
         </div>
       )}
       <main id="top">
-        {detailProduct ? (
+        {aboutRoute ? (
+          <AboutPage
+            sections={aboutSections}
+            products={products}
+            onBack={closeAbout}
+            onFollow={followLink}
+            onCategory={openCategory}
+            onAdd={add}
+            onDetails={openProductDetails}
+            onWish={toggleWishlist}
+            wishlist={wishlist}
+          />
+        ) : detailProduct ? (
           <ProductDetailPage
             product={detailProduct}
             related={products
@@ -1690,7 +2119,7 @@ function Storefront({
             </section>
           )
         )}
-        {!detailProduct && !categoryRoute && (
+        {!aboutRoute && !detailProduct && !categoryRoute && (
           <>
             {categories && (
               <section className="market-categories">
@@ -1917,7 +2346,11 @@ function Storefront({
                   <p>{promo.eyebrow}</p>
                   <h2>{promo.title}</h2>
                   <span>{promo.description}</span>
-                  <button onClick={() => jump("shop")}>{promo.cta}</button>
+                  <button
+                    onClick={() => followLink(promo.buttonLink || "/about")}
+                  >
+                    {promo.cta}
+                  </button>
                 </div>
               </section>
             )}
@@ -1928,7 +2361,7 @@ function Storefront({
                   <h2>{story.title}</h2>
                 </div>
                 <p>{story.description}</p>
-                <button onClick={() => jump("shop")}>{story.cta}</button>
+                <button onClick={openAbout}>{story.cta}</button>
               </section>
             )}
             {sections
@@ -2078,7 +2511,7 @@ function Storefront({
         <span className="market-tagline">Elegance · Excellence · Modest</span>
         <div>
           <button onClick={() => jump("shop")}>Shop</button>
-          <button onClick={() => jump("story")}>About</button>
+          <button onClick={openAbout}>About</button>
         </div>
         <small>© 2026 Beryl RTW</small>
       </footer>
@@ -2147,10 +2580,14 @@ function StorefrontBuilder({
   sections,
   onChange,
   onSave,
+  pageLabel = "Homepage",
+  previewPath = "/",
 }: {
   sections: StoreSection[];
   onChange: (items: StoreSection[]) => void;
   onSave: () => Promise<void>;
+  pageLabel?: string;
+  previewPath?: string;
 }) {
   const [selectedId, setSelectedId] = useState(sections[0]?.id || "");
   const [saving, setSaving] = useState(false);
@@ -2284,8 +2721,8 @@ function StorefrontBuilder({
           <span>Live editing</span>
         </div>
         <p className="builder-help">
-          Drag sections to rearrange the homepage. Click one to change its
-          words, visibility and style.
+          Drag sections to rearrange the {pageLabel.toLowerCase()}. Click one to
+          change its words, visibility and style.
         </p>
         <DndContext
           sensors={sensors}
@@ -2333,7 +2770,7 @@ function StorefrontBuilder({
       <section className="builder-canvas">
         <div className="builder-toolbar">
           <div>
-            <span className="builder-online" /> Homepage ·{" "}
+            <span className="builder-online" /> {pageLabel} ·{" "}
             {sections.filter((section) => section.visible).length} blocks live
           </div>
           <div>
@@ -2341,7 +2778,9 @@ function StorefrontBuilder({
               <ChevronLeft size={16} /> Revert
             </button>
             <button
-              onClick={() => window.open("/", "_blank", "noopener,noreferrer")}
+              onClick={() =>
+                window.open(previewPath, "_blank", "noopener,noreferrer")
+              }
             >
               <Eye size={16} /> Preview
             </button>
@@ -2565,7 +3004,7 @@ function StorefrontBuilder({
                 rows={4}
               />
             </label>
-            {!["story", "newsletter"].includes(selected.type) && (
+            {!["newsletter"].includes(selected.type) && (
               <>
                 <label>
                   Button label
@@ -4115,6 +4554,8 @@ function MerchantAdmin({
   setProducts,
   sections,
   setSections,
+  aboutSections,
+  setAboutSections,
   logo,
   setLogo,
   announcement,
@@ -4127,6 +4568,8 @@ function MerchantAdmin({
   ) => void;
   sections: StoreSection[];
   setSections: (items: StoreSection[]) => void;
+  aboutSections: StoreSection[];
+  setAboutSections: (items: StoreSection[]) => void;
   logo: string;
   setLogo: (next: string) => Promise<void>;
   announcement: string;
@@ -4195,15 +4638,60 @@ function MerchantAdmin({
     }
   };
   const saveLayout = async () => {
-    localStorage.setItem("beryl-storefront-layout", JSON.stringify(sections));
+    const cleanSections = stripAboutCarrier(sections);
+    localStorage.setItem(
+      "beryl-storefront-layout",
+      JSON.stringify(cleanSections),
+    );
     localStorage.setItem(
       "beryl-last-published-layout",
-      JSON.stringify(sections),
+      JSON.stringify(cleanSections),
     );
-    if (supabase)
-      await supabase
+    if (supabase) {
+      const { data } = await supabase
         .from("storefront_layout")
-        .upsert({ id: 1, sections, updated_at: new Date().toISOString() });
+        .select("sections")
+        .eq("id", 1)
+        .maybeSingle();
+      const carrier = Array.isArray(data?.sections)
+        ? (data.sections as StoreSection[]).find(
+            (item) => item.id === aboutCarrierId,
+          )
+        : null;
+      await supabase.from("storefront_layout").upsert({
+        id: 1,
+        sections: carrier ? [...cleanSections, carrier] : cleanSections,
+        updated_at: new Date().toISOString(),
+      });
+    }
+  };
+  const saveAboutLayout = async () => {
+    localStorage.setItem("beryl-about-layout", JSON.stringify(aboutSections));
+    localStorage.setItem(
+      "beryl-last-published-about-layout",
+      JSON.stringify(aboutSections),
+    );
+    if (!supabase) return;
+    const { error } = await supabase.from("storefront_layout").upsert({
+      id: 1,
+      about_sections: aboutSections,
+      updated_at: new Date().toISOString(),
+    });
+    if (!error) return;
+    const { data } = await supabase
+      .from("storefront_layout")
+      .select("sections")
+      .eq("id", 1)
+      .maybeSingle();
+    const existing = Array.isArray(data?.sections) ? data.sections : [];
+    await supabase.from("storefront_layout").upsert({
+      id: 1,
+      sections: [
+        ...stripAboutCarrier(existing as StoreSection[]),
+        makeAboutCarrier(aboutSections),
+      ],
+      updated_at: new Date().toISOString(),
+    });
   };
   const createOrder = async (order: Omit<Order, "id" | "created_at">) => {
     if (!supabase) return;
@@ -4243,6 +4731,7 @@ function MerchantAdmin({
     { label: "Dashboard", icon: LayoutDashboard },
     { label: "Products", icon: Package },
     { label: "Landing page", icon: Layers3 },
+    { label: "About page", icon: Store },
     { label: "Orders", icon: ClipboardList },
     { label: "Customers", icon: Users },
     { label: "Marketing", icon: Megaphone },
@@ -4337,6 +4826,28 @@ function MerchantAdmin({
               sections={sections}
               onChange={setSections}
               onSave={saveLayout}
+              pageLabel="Homepage"
+              previewPath="/"
+            />
+          </>
+        )}
+        {page === "About page" && (
+          <>
+            <div className="merchant-page-head builder-page-head">
+              <div>
+                <p>Visual editor</p>
+                <h1>Design your About page</h1>
+                <span>
+                  Tell your story, share your values and publish it yourself.
+                </span>
+              </div>
+            </div>
+            <StorefrontBuilder
+              sections={aboutSections}
+              onChange={setAboutSections}
+              onSave={saveAboutLayout}
+              pageLabel="About page"
+              previewPath="/about"
             />
           </>
         )}
@@ -4508,6 +5019,16 @@ export default function App() {
       return defaultSections;
     }
   });
+  const [aboutSections, setAboutSections] = useState<StoreSection[]>(() => {
+    try {
+      return (
+        JSON.parse(localStorage.getItem("beryl-about-layout") || "") ||
+        defaultAboutSections
+      );
+    } catch {
+      return defaultAboutSections;
+    }
+  });
   const [logo, setLogoState] = useState(
     () => localStorage.getItem("beryl-logo") || "",
   );
@@ -4571,15 +5092,40 @@ export default function App() {
       });
     supabase
       .from("storefront_layout")
-      .select("sections")
+      .select("sections,about_sections")
       .eq("id", 1)
       .maybeSingle()
-      .then(({ data }) => {
-        if (data?.sections?.length) {
-          setSections(data.sections as StoreSection[]);
+      .then(async ({ data, error }) => {
+        let row = data as {
+          sections?: StoreSection[];
+          about_sections?: StoreSection[];
+        } | null;
+        if (error) {
+          const fallback = await supabase
+            .from("storefront_layout")
+            .select("sections")
+            .eq("id", 1)
+            .maybeSingle();
+          row = fallback.data as { sections?: StoreSection[] } | null;
+        }
+        const remoteSections = Array.isArray(row?.sections) ? row.sections : [];
+        const cleanSections = stripAboutCarrier(remoteSections);
+        const carrierAbout = decodeAboutCarrier(remoteSections);
+        if (cleanSections.length) {
+          setSections(cleanSections);
           localStorage.setItem(
             "beryl-storefront-layout",
-            JSON.stringify(data.sections),
+            JSON.stringify(cleanSections),
+          );
+        }
+        const remoteAbout = Array.isArray(row?.about_sections)
+          ? row.about_sections
+          : carrierAbout;
+        if (remoteAbout?.length) {
+          setAboutSections(remoteAbout);
+          localStorage.setItem(
+            "beryl-about-layout",
+            JSON.stringify(remoteAbout),
           );
         }
       });
@@ -4604,8 +5150,13 @@ export default function App() {
       });
   };
   const updateSections = (items: StoreSection[]) => {
-    setSections(items);
-    localStorage.setItem("beryl-storefront-layout", JSON.stringify(items));
+    const cleanItems = stripAboutCarrier(items);
+    setSections(cleanItems);
+    localStorage.setItem("beryl-storefront-layout", JSON.stringify(cleanItems));
+  };
+  const updateAboutSections = (items: StoreSection[]) => {
+    setAboutSections(items);
+    localStorage.setItem("beryl-about-layout", JSON.stringify(items));
   };
   const updateAnnouncement = async (value: string) => {
     setAnnouncement(value);
@@ -4628,6 +5179,7 @@ export default function App() {
       <Storefront
         products={catalogue}
         sections={sections}
+        aboutSections={aboutSections}
         logo={logo}
         announcement={announcement}
       />
@@ -4641,6 +5193,8 @@ export default function App() {
       setProducts={setProducts}
       sections={sections}
       setSections={updateSections}
+      aboutSections={aboutSections}
+      setAboutSections={updateAboutSections}
       logo={logo}
       setLogo={updateLogo}
       announcement={announcement}

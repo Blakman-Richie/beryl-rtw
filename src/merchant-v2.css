@@ -3926,3 +3926,87 @@ body {
     animation: none;
   }
 }
+
+/* Dedicated, editable About page */
+.market-about-page {
+  background: var(--m-cream);
+}
+.market-about-topline {
+  min-height: 62px;
+  padding: 0 clamp(18px, 5vw, 72px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--m-line);
+  background: #fff;
+  color: var(--m-muted);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.market-about-topline button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--m-ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  text-transform: inherit;
+}
+.market-about-hero {
+  min-height: 620px;
+}
+.market-about-hero .market-hero-copy > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.market-about-empty {
+  min-height: 470px;
+  padding: 70px 18px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 18px;
+  background: var(--m-blue);
+  color: #fff;
+  text-align: center;
+}
+.market-about-empty p {
+  margin: 0;
+  font: 10px "DM Mono", monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.market-about-empty h1 {
+  max-width: 760px;
+  margin: 0;
+  font: 500 clamp(46px, 7vw, 86px)/0.95 "Playfair Display", serif;
+  letter-spacing: -0.06em;
+}
+.market-about-empty button {
+  padding: 14px 18px;
+  border: 0;
+  background: var(--m-lime);
+  color: var(--m-ink);
+  font: 10px "DM Mono", monospace;
+  text-transform: uppercase;
+}
+.market-about-categories,
+.market-about-shop {
+  background: #fff;
+}
+.market-about-story {
+  background: #f7f8f4;
+}
+@media (max-width: 760px) {
+  .market-about-topline {
+    min-height: 52px;
+    font-size: 9px;
+  }
+  .market-about-hero {
+    min-height: 0;
+  }
+}
