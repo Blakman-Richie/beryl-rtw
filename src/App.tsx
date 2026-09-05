@@ -895,10 +895,12 @@ function Storefront({
   products,
   sections,
   logo,
+  announcement,
 }: {
   products: Product[];
   sections: StoreSection[];
   logo: string;
+  announcement: string;
 }) {
   const [cart, setCart] = useState<Product[]>([]);
   const [bagOpen, setBagOpen] = useState(false);
@@ -1065,7 +1067,7 @@ function Storefront({
         </div>
       )}
       <div className="market-utility">
-        <span>New customers get first access to the next drop</span>
+        <span>{announcement}</span>
         <span>Delivery across Nigeria · Worldwide shipping</span>
       </div>
       <header className="market-header">
@@ -4155,7 +4157,14 @@ export default function App() {
   };
   if (["invite", "recovery"].includes(authType || "")) return <PasswordSetup />;
   if (!admin)
-    return <Storefront products={catalogue} sections={sections} logo={logo} />;
+    return (
+      <Storefront
+        products={catalogue}
+        sections={sections}
+        logo={logo}
+        announcement={announcement}
+      />
+    );
   if (!sessionReady)
     return <main className="merchant-loading">Opening merchant studio…</main>;
   if (!signedIn) return <AuthScreen goStore={goStore} />;
