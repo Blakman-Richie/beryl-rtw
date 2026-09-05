@@ -2068,7 +2068,9 @@ function StorefrontBuilder({
             <button onClick={revertToPublished}>
               <ChevronLeft size={16} /> Revert
             </button>
-            <button>
+            <button
+              onClick={() => window.open("/", "_blank", "noopener,noreferrer")}
+            >
               <Eye size={16} /> Preview
             </button>
             <button
