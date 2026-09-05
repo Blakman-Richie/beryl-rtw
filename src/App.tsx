@@ -635,6 +635,63 @@ function ProductDetailPage({
   );
 }
 
+function CategoryPage({
+  type,
+  products,
+  onBack,
+  onAdd,
+  onDetails,
+  onWish,
+  wishlist,
+}: {
+  type: string;
+  products: Product[];
+  onBack: () => void;
+  onAdd: (product: Product) => void;
+  onDetails: (product: Product) => void;
+  onWish: (product: Product) => void;
+  wishlist: number[];
+}) {
+  const collection = products.filter(
+    (product) =>
+      product.type.toLowerCase() === type.toLowerCase() &&
+      product.status !== "archived",
+  );
+  return (
+    <section className="market-category-page">
+      <button className="market-detail-back" onClick={onBack}>
+        <ChevronLeft size={16} /> Back to home
+      </button>
+      <p className="market-category-page-kicker">The Beryl edit</p>
+      <h1>{type}</h1>
+      <p className="market-category-page-intro">
+        Thoughtful Ankara pieces for work, weekends and everywhere in between.
+      </p>
+      {collection.length ? (
+        <div className="market-product-grid">
+          {collection.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onAdd={onAdd}
+              onView={() => undefined}
+              onDetails={onDetails}
+              onWish={onWish}
+              wished={wishlist.includes(product.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="market-empty-results">
+          <Package size={28} />
+          <h3>New {type.toLowerCase()} are coming soon.</h3>
+          <button onClick={onBack}>Browse the full collection</button>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function DiscoverDeck({
   products,
   onLike,
@@ -1020,6 +1077,12 @@ function Storefront({
       ? products.find((product) => product.id === Number(match[1])) || null
       : null;
   });
+  const [categoryRoute, setCategoryRoute] = useState<string | null>(() => {
+    const match = window.location.pathname.match(/^\/category\/([^/]+)/);
+    if (!match) return null;
+    const category = match[1].replace(/-/g, " ");
+    return category.charAt(0).toUpperCase() + category.slice(1);
+  });
   const [discoverOpen, setDiscoverOpen] = useState(false);
   const [visitorSessionId] = useState(() => {
     const existing = localStorage.getItem("beryl-visitor-session");
@@ -1076,9 +1139,15 @@ function Storefront({
         window.location.pathname.match(/^\/category\/([^/]+)/);
       if (categoryMatch) {
         const category = categoryMatch[1].replace(/-/g, " ");
-        setFilter(category.charAt(0).toUpperCase() + category.slice(1));
+        const nextCategory =
+          category.charAt(0).toUpperCase() + category.slice(1);
+        setCategoryRoute(nextCategory);
+        setFilter(nextCategory);
       } else if (!match) {
+        setCategoryRoute(null);
         setFilter("All");
+      } else {
+        setCategoryRoute(null);
       }
     };
     window.addEventListener("popstate", syncRoute);
@@ -1127,12 +1196,14 @@ function Storefront({
     window.location.assign(link);
   };
   const openProductDetails = (product: Product) => {
+    setCategoryRoute(null);
     window.history.pushState({}, "", `/products/${product.id}`);
     setDetailProduct(product);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const openCategory = (type: string) => {
     setDetailProduct(null);
+    setCategoryRoute(type === "All" ? null : type);
     setFilter(type);
     window.history.pushState(
       {},
@@ -1147,6 +1218,7 @@ function Storefront({
   const closeProductDetails = () => {
     window.history.pushState({}, "", "/");
     setDetailProduct(null);
+    setCategoryRoute(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const toggleWishlist = (product: Product) => {
@@ -1554,6 +1626,16 @@ function Storefront({
             onDetails={openProductDetails}
             wished={wishlist.includes(detailProduct.id)}
           />
+        ) : categoryRoute ? (
+          <CategoryPage
+            type={categoryRoute}
+            products={products}
+            onBack={closeProductDetails}
+            onAdd={add}
+            onDetails={openProductDetails}
+            onWish={toggleWishlist}
+            wishlist={wishlist}
+          />
         ) : (
           hero && (
             <section
@@ -1601,7 +1683,7 @@ function Storefront({
             </section>
           )
         )}
-        {!detailProduct && (
+        {!detailProduct && !categoryRoute && (
           <>
             {categories && (
               <section className="market-categories">
