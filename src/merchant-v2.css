@@ -3694,3 +3694,12 @@ body {
 .market-story {
   grid-template-columns: minmax(250px, 1.15fr) minmax(210px, 0.65fr) auto;
 }
+.market-storefront button,
+.market-storefront small,
+.market-storefront p,
+.market-storefront .market-brand b,
+.market-storefront .market-footer small {
+  font-family: "Montserrat", sans-serif;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
