@@ -17,7 +17,7 @@ An editorial React storefront and an admin dashboard foundation for **Beryl RTW 
 | Storefront | Vercel + GitHub |
 | Products, orders, admin login | Supabase (Postgres + Auth, free tier to start) |
 | Product and logo images | Supabase Storage |
-| Payments | Paystack for Nigeria; Stripe after international payment requirements are confirmed |
+| Payments | OPay online gateway for Nigeria; add a second provider later for international checkout |
 | Domain | `berylrtw.vercel.app` immediately; a `.com` domain is paid, not reliably free |
 
 ## First-time setup
