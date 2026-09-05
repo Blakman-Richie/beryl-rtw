@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -52,6 +52,8 @@ import {
 } from "lucide-react";
 import { supabase } from "./supabase";
 
+const AnalyticsCharts = lazy(() => import("./AnalyticsCharts"));
+
 type Product = {
   id: number;
   name: string;
@@ -64,6 +66,28 @@ type Product = {
   stock?: number;
   status?: string;
   description?: string;
+};
+type OrderStatus =
+  "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
+type Order = {
+  id: number;
+  customer_name: string;
+  customer_email: string;
+  customer_phone?: string;
+  items: string;
+  total: number;
+  status: OrderStatus;
+  created_at: string;
+};
+type Discount = {
+  id: number;
+  code: string;
+  kind: "percent" | "fixed";
+  amount: number;
+  expires_at?: string;
+  usage_limit?: number;
+  uses?: number;
+  active: boolean;
 };
 type SectionKind =
   | "hero"
@@ -2945,6 +2969,559 @@ function Dashboard({
     </>
   );
 }
+
+function OrdersManager({
+  orders,
+  onCreate,
+  onStatus,
+}: {
+  orders: Order[];
+  onCreate: (order: Omit<Order, "id" | "created_at">) => Promise<void>;
+  onStatus: (order: Order, status: OrderStatus) => Promise<void>;
+}) {
+  const [creating, setCreating] = useState(false);
+  const [draft, setDraft] = useState({
+    customer_name: "",
+    customer_email: "",
+    customer_phone: "",
+    items: "",
+    total: "",
+    status: "pending" as OrderStatus,
+  });
+  return (
+    <>
+      <div className="merchant-page-head">
+        <div>
+          <p>Order centre</p>
+          <h1>Orders</h1>
+          <span>
+            Log WhatsApp orders here and keep every customer update in one
+            place.
+          </span>
+        </div>
+        <button className="merchant-primary" onClick={() => setCreating(true)}>
+          <Plus size={18} /> Log order
+        </button>
+      </div>
+      <section className="merchant-table-card">
+        <div className="merchant-table-head">
+          <b>{orders.length} orders</b>
+          <span>Pending → Confirmed → Shipped → Delivered</span>
+        </div>
+        <div className="merchant-order-table">
+          {orders.length ? (
+            orders.map((order) => (
+              <article key={order.id}>
+                <span>
+                  <b>#{order.id}</b>
+                  <small>
+                    {new Date(order.created_at).toLocaleDateString()}
+                  </small>
+                </span>
+                <span>
+                  <b>{order.customer_name}</b>
+                  <small>{order.customer_email}</small>
+                </span>
+                <span>{order.items}</span>
+                <strong>₦{Number(order.total).toLocaleString()}</strong>
+                <select
+                  value={order.status}
+                  onChange={(event) =>
+                    onStatus(order, event.target.value as OrderStatus)
+                  }
+                >
+                  {[
+                    "pending",
+                    "confirmed",
+                    "shipped",
+                    "delivered",
+                    "cancelled",
+                  ].map((status) => (
+                    <option key={status}>{status}</option>
+                  ))}
+                </select>
+              </article>
+            ))
+          ) : (
+            <div className="merchant-empty">
+              <ClipboardList size={32} />
+              <h2>No orders yet.</h2>
+              <p>When a customer confirms an order on WhatsApp, add it here.</p>
+            </div>
+          )}
+        </div>
+      </section>
+      {creating && (
+        <div className="editor-sheet-wrap">
+          <button
+            className="editor-sheet-scrim"
+            onClick={() => setCreating(false)}
+            aria-label="Close order form"
+          />
+          <form
+            className="editor-sheet compact"
+            onSubmit={async (event) => {
+              event.preventDefault();
+              await onCreate({ ...draft, total: Number(draft.total || 0) });
+              setCreating(false);
+            }}
+          >
+            <div className="editor-sheet-head">
+              <div>
+                <p>Manual order</p>
+                <h2>Log a WhatsApp order</h2>
+              </div>
+              <button type="button" onClick={() => setCreating(false)}>
+                <X />
+              </button>
+            </div>
+            <label>
+              Customer name
+              <input
+                value={draft.customer_name}
+                onChange={(event) =>
+                  setDraft({ ...draft, customer_name: event.target.value })
+                }
+                required
+              />
+            </label>
+            <label>
+              Customer email
+              <input
+                type="email"
+                value={draft.customer_email}
+                onChange={(event) =>
+                  setDraft({ ...draft, customer_email: event.target.value })
+                }
+                required
+              />
+            </label>
+            <label>
+              Phone / WhatsApp
+              <input
+                value={draft.customer_phone}
+                onChange={(event) =>
+                  setDraft({ ...draft, customer_phone: event.target.value })
+                }
+              />
+            </label>
+            <label>
+              Items ordered
+              <textarea
+                rows={3}
+                value={draft.items}
+                onChange={(event) =>
+                  setDraft({ ...draft, items: event.target.value })
+                }
+                required
+              />
+            </label>
+            <div className="editor-grid">
+              <label>
+                Total (₦)
+                <input
+                  type="number"
+                  min="0"
+                  value={draft.total}
+                  onChange={(event) =>
+                    setDraft({ ...draft, total: event.target.value })
+                  }
+                  required
+                />
+              </label>
+              <label>
+                Current status
+                <select
+                  value={draft.status}
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      status: event.target.value as OrderStatus,
+                    })
+                  }
+                >
+                  {[
+                    "pending",
+                    "confirmed",
+                    "shipped",
+                    "delivered",
+                    "cancelled",
+                  ].map((status) => (
+                    <option key={status}>{status}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <button className="editor-save">
+              Save order <ArrowRight size={17} />
+            </button>
+          </form>
+        </div>
+      )}
+    </>
+  );
+}
+
+function CustomersManager({ orders }: { orders: Order[] }) {
+  const customers = Object.values(
+    orders.reduce<
+      Record<
+        string,
+        {
+          name: string;
+          email: string;
+          phone?: string;
+          count: number;
+          total: number;
+          latest: string;
+        }
+      >
+    >((all, order) => {
+      const key = order.customer_email.toLowerCase();
+      const existing = all[key] || {
+        name: order.customer_name,
+        email: order.customer_email,
+        phone: order.customer_phone,
+        count: 0,
+        total: 0,
+        latest: order.created_at,
+      };
+      existing.count += 1;
+      existing.total += Number(order.total);
+      if (new Date(order.created_at) > new Date(existing.latest))
+        existing.latest = order.created_at;
+      all[key] = existing;
+      return all;
+    }, {}),
+  );
+  return (
+    <>
+      <div className="merchant-page-head">
+        <div>
+          <p>Customer list</p>
+          <h1>Customers</h1>
+          <span>
+            Every customer who has ordered through Beryl RTW, with their
+            purchase history.
+          </span>
+        </div>
+      </div>
+      <section className="merchant-table-card">
+        <div className="merchant-table-head">
+          <b>{customers.length} customers</b>
+          <span>Built automatically from orders</span>
+        </div>
+        <div className="merchant-customer-grid">
+          {customers.length ? (
+            customers.map((customer) => (
+              <article key={customer.email}>
+                <div>
+                  <span>{customer.name.slice(0, 1).toUpperCase()}</span>
+                  <section>
+                    <h2>{customer.name}</h2>
+                    <p>{customer.email}</p>
+                    {customer.phone && <small>{customer.phone}</small>}
+                  </section>
+                </div>
+                <footer>
+                  <span>
+                    {customer.count} order{customer.count === 1 ? "" : "s"}
+                  </span>
+                  <strong>₦{customer.total.toLocaleString()}</strong>
+                </footer>
+              </article>
+            ))
+          ) : (
+            <div className="merchant-empty">
+              <Users size={32} />
+              <h2>Your customer list will grow here.</h2>
+              <p>Log the first WhatsApp order to start building it.</p>
+            </div>
+          )}
+        </div>
+      </section>
+    </>
+  );
+}
+
+function MarketingManager({
+  discounts,
+  onCreate,
+  announcement,
+  setAnnouncement,
+}: {
+  discounts: Discount[];
+  onCreate: (discount: Omit<Discount, "id" | "uses">) => Promise<void>;
+  announcement: string;
+  setAnnouncement: (value: string) => void;
+}) {
+  const [draft, setDraft] = useState({
+    code: "",
+    kind: "percent" as Discount["kind"],
+    amount: "",
+    expires_at: "",
+    usage_limit: "",
+  });
+  return (
+    <>
+      <div className="merchant-page-head">
+        <div>
+          <p>Campaigns</p>
+          <h1>Marketing</h1>
+          <span>
+            Create offers and keep the store announcement fresh without touching
+            code.
+          </span>
+        </div>
+      </div>
+      <section className="marketing-grid">
+        <article>
+          <p>Announcement bar</p>
+          <h2>What shoppers see first</h2>
+          <textarea
+            rows={4}
+            value={announcement}
+            onChange={(event) => setAnnouncement(event.target.value)}
+          />
+          <button
+            className="merchant-primary"
+            onClick={() =>
+              localStorage.setItem("beryl-announcement", announcement)
+            }
+          >
+            Save announcement
+          </button>
+        </article>
+        <article>
+          <p>New promotion</p>
+          <h2>Create a discount code</h2>
+          <form
+            onSubmit={async (event) => {
+              event.preventDefault();
+              await onCreate({
+                code: draft.code.toUpperCase(),
+                kind: draft.kind,
+                amount: Number(draft.amount),
+                expires_at: draft.expires_at || undefined,
+                usage_limit: draft.usage_limit
+                  ? Number(draft.usage_limit)
+                  : undefined,
+                active: true,
+              });
+              setDraft({
+                code: "",
+                kind: "percent",
+                amount: "",
+                expires_at: "",
+                usage_limit: "",
+              });
+            }}
+          >
+            <input
+              placeholder="BERYL10"
+              value={draft.code}
+              onChange={(event) =>
+                setDraft({ ...draft, code: event.target.value })
+              }
+              required
+            />
+            <div>
+              <select
+                value={draft.kind}
+                onChange={(event) =>
+                  setDraft({
+                    ...draft,
+                    kind: event.target.value as Discount["kind"],
+                  })
+                }
+              >
+                <option value="percent">Percentage off</option>
+                <option value="fixed">Fixed naira amount</option>
+              </select>
+              <input
+                type="number"
+                min="1"
+                placeholder="Amount"
+                value={draft.amount}
+                onChange={(event) =>
+                  setDraft({ ...draft, amount: event.target.value })
+                }
+                required
+              />
+            </div>
+            <input
+              type="datetime-local"
+              value={draft.expires_at}
+              onChange={(event) =>
+                setDraft({ ...draft, expires_at: event.target.value })
+              }
+            />
+            <input
+              type="number"
+              min="1"
+              placeholder="Usage limit (optional)"
+              value={draft.usage_limit}
+              onChange={(event) =>
+                setDraft({ ...draft, usage_limit: event.target.value })
+              }
+            />
+            <button className="merchant-primary">
+              Create code <ArrowRight size={16} />
+            </button>
+          </form>
+        </article>
+      </section>
+      <section className="merchant-table-card">
+        <div className="merchant-table-head">
+          <b>Active codes</b>
+          <span>Use these in your campaign messages</span>
+        </div>
+        <div className="discount-list">
+          {discounts.length ? (
+            discounts.map((discount) => (
+              <article key={discount.id}>
+                <b>{discount.code}</b>
+                <span>
+                  {discount.kind === "percent"
+                    ? `${discount.amount}% off`
+                    : `₦${discount.amount.toLocaleString()} off`}
+                </span>
+                <small>
+                  {discount.expires_at
+                    ? `Ends ${new Date(discount.expires_at).toLocaleDateString()}`
+                    : "No expiry"}{" "}
+                  · {discount.uses || 0} uses
+                </small>
+              </article>
+            ))
+          ) : (
+            <div className="merchant-empty">
+              <Megaphone size={32} />
+              <h2>No promotion codes yet.</h2>
+              <p>Create one for your next drop or customer thank-you offer.</p>
+            </div>
+          )}
+        </div>
+      </section>
+    </>
+  );
+}
+
+function AnalyticsDashboard({
+  orders,
+  products,
+  swipeEvents,
+}: {
+  orders: Order[];
+  products: Product[];
+  swipeEvents: Array<{
+    product_id: number;
+    direction: string;
+    created_at: string;
+  }>;
+}) {
+  const revenue = orders
+    .filter((order) => order.status !== "cancelled")
+    .reduce((sum, order) => sum + Number(order.total), 0);
+  const chartData = Array.from({ length: 7 }, (_, offset) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (6 - offset));
+    const key = date.toLocaleDateString("en-GB", { weekday: "short" });
+    return {
+      day: key,
+      revenue: orders
+        .filter(
+          (order) =>
+            new Date(order.created_at).toDateString() === date.toDateString(),
+        )
+        .reduce((sum, order) => sum + Number(order.total), 0),
+    };
+  });
+  const likes = products
+    .map((product) => ({
+      name: product.name,
+      likes: swipeEvents.filter(
+        (event) =>
+          event.product_id === product.id && event.direction === "like",
+      ).length,
+    }))
+    .sort((a, b) => b.likes - a.likes)
+    .slice(0, 5);
+  return (
+    <>
+      <div className="merchant-page-head">
+        <div>
+          <p>Reporting</p>
+          <h1>Analytics</h1>
+          <span>
+            A practical view of sales, customer orders and which pieces shoppers
+            love.
+          </span>
+        </div>
+      </div>
+      <section className="merchant-stats">
+        <article>
+          <span>Total revenue</span>
+          <strong>₦{revenue.toLocaleString()}</strong>
+          <small>Excludes cancelled orders.</small>
+        </article>
+        <article>
+          <span>Orders</span>
+          <strong>{orders.length}</strong>
+          <small>
+            {orders.filter((order) => order.status === "pending").length}{" "}
+            awaiting confirmation.
+          </small>
+        </article>
+        <article>
+          <span>Average order</span>
+          <strong>
+            ₦
+            {orders.length
+              ? Math.round(revenue / orders.length).toLocaleString()
+              : "0"}
+          </strong>
+          <small>Across logged orders.</small>
+        </article>
+        <article>
+          <span>Product likes</span>
+          <strong>
+            {swipeEvents.filter((event) => event.direction === "like").length}
+          </strong>
+          <small>Signals from Discover.</small>
+        </article>
+      </section>
+      <section className="analytics-grid">
+        <article>
+          <p>Revenue this week</p>
+          <h2>Sales trend</h2>
+          <Suspense
+            fallback={
+              <div className="analytics-chart-loading">
+                Loading sales chart…
+              </div>
+            }
+          >
+            <AnalyticsCharts data={chartData} />
+          </Suspense>
+        </article>
+        <article>
+          <p>Discover engagement</p>
+          <h2>Most liked pieces</h2>
+          <div className="analytics-likes">
+            {likes.map((item) => (
+              <div key={item.name}>
+                <span>{item.name}</span>
+                <b>{item.likes} likes</b>
+              </div>
+            ))}
+          </div>
+        </article>
+      </section>
+    </>
+  );
+}
+
 function PlaceholderPage({
   title,
   icon: Icon,
@@ -3101,11 +3678,45 @@ function MerchantAdmin({
   const [page, setPage] = useState("Dashboard");
   const [collapsed, setCollapsed] = useState(false);
   const [sessionEmail, setSessionEmail] = useState("");
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [discounts, setDiscounts] = useState<Discount[]>([]);
+  const [swipeEvents, setSwipeEvents] = useState<
+    Array<{ product_id: number; direction: string; created_at: string }>
+  >([]);
   useEffect(() => {
     if (!supabase) return;
     supabase.auth
       .getUser()
       .then(({ data }) => setSessionEmail(data.user?.email || "Beryl admin"));
+  }, []);
+  useEffect(() => {
+    if (!supabase) return;
+    void Promise.all([
+      supabase
+        .from("orders")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("discounts")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("swipe_events")
+        .select("product_id,direction,created_at")
+        .order("created_at", { ascending: false }),
+    ]).then(([ordersResult, discountsResult, swipesResult]) => {
+      if (ordersResult.data) setOrders(ordersResult.data as Order[]);
+      if (discountsResult.data)
+        setDiscounts(discountsResult.data as Discount[]);
+      if (swipesResult.data)
+        setSwipeEvents(
+          swipesResult.data as Array<{
+            product_id: number;
+            direction: string;
+            created_at: string;
+          }>,
+        );
+    });
   }, []);
   const saveProduct = async (product: Product) => {
     setProducts((current) =>
@@ -3136,6 +3747,40 @@ function MerchantAdmin({
         .from("storefront_layout")
         .upsert({ id: 1, sections, updated_at: new Date().toISOString() });
   };
+  const createOrder = async (order: Omit<Order, "id" | "created_at">) => {
+    if (!supabase) return;
+    const { data, error } = await supabase
+      .from("orders")
+      .insert(order)
+      .select()
+      .single();
+    if (error) throw error;
+    if (data) setOrders((current) => [data as Order, ...current]);
+  };
+  const updateOrderStatus = async (order: Order, status: OrderStatus) => {
+    setOrders((current) =>
+      current.map((item) =>
+        item.id === order.id ? { ...item, status } : item,
+      ),
+    );
+    if (supabase) {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status })
+        .eq("id", order.id);
+      if (error) throw error;
+    }
+  };
+  const createDiscount = async (discount: Omit<Discount, "id" | "uses">) => {
+    if (!supabase) return;
+    const { data, error } = await supabase
+      .from("discounts")
+      .insert(discount)
+      .select()
+      .single();
+    if (error) throw error;
+    if (data) setDiscounts((current) => [data as Discount, ...current]);
+  };
   const nav = [
     { label: "Dashboard", icon: LayoutDashboard },
     { label: "Products", icon: Package },
@@ -3143,6 +3788,7 @@ function MerchantAdmin({
     { label: "Orders", icon: ClipboardList },
     { label: "Customers", icon: Users },
     { label: "Marketing", icon: Megaphone },
+    { label: "Analytics", icon: LayoutDashboard },
     { label: "Settings", icon: Settings2 },
   ];
   return (
@@ -3237,24 +3883,26 @@ function MerchantAdmin({
           </>
         )}
         {page === "Orders" && (
-          <PlaceholderPage
-            title="Orders centre"
-            icon={ClipboardList}
-            description="Your customer orders will land here once OPay checkout and its payment webhooks are connected."
+          <OrdersManager
+            orders={orders}
+            onCreate={createOrder}
+            onStatus={updateOrderStatus}
           />
         )}
-        {page === "Customers" && (
-          <PlaceholderPage
-            title="Customer list"
-            icon={Users}
-            description="This will become your customer directory when checkout collects customer details."
-          />
-        )}
+        {page === "Customers" && <CustomersManager orders={orders} />}
         {page === "Marketing" && (
-          <PlaceholderPage
-            title="Marketing studio"
-            icon={Megaphone}
-            description="Build campaign emails, discounts and launch messages from one friendly workspace."
+          <MarketingManager
+            discounts={discounts}
+            onCreate={createDiscount}
+            announcement={announcement}
+            setAnnouncement={setAnnouncement}
+          />
+        )}
+        {page === "Analytics" && (
+          <AnalyticsDashboard
+            orders={orders}
+            products={products}
+            swipeEvents={swipeEvents}
           />
         )}
         {page === "Settings" && (

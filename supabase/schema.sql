@@ -67,3 +67,32 @@ create index if not exists swipe_events_product_created_idx on public.swipe_even
 alter table public.swipe_events enable row level security;
 create policy "Anyone can record a swipe choice" on public.swipe_events for insert with check (true);
 create policy "Authenticated admin can view swipe choices" on public.swipe_events for select to authenticated using (true);
+
+-- Merchant operations: orders are logged from WhatsApp until a card checkout is connected.
+create table if not exists public.orders (
+  id bigint generated always as identity primary key,
+  customer_name text not null,
+  customer_email text not null,
+  customer_phone text,
+  items text not null,
+  total numeric(12,2) not null default 0,
+  status text not null default 'pending' check (status in ('pending', 'confirmed', 'shipped', 'delivered', 'cancelled')),
+  created_at timestamptz not null default now()
+);
+create index if not exists orders_created_at_idx on public.orders (created_at desc);
+alter table public.orders enable row level security;
+create policy "Authenticated admin can manage orders" on public.orders for all to authenticated using (true) with check (true);
+
+create table if not exists public.discounts (
+  id bigint generated always as identity primary key,
+  code text not null unique,
+  kind text not null default 'percent' check (kind in ('percent', 'fixed')),
+  amount numeric(12,2) not null,
+  expires_at timestamptz,
+  usage_limit integer,
+  uses integer not null default 0,
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+alter table public.discounts enable row level security;
+create policy "Authenticated admin can manage discounts" on public.discounts for all to authenticated using (true) with check (true);
