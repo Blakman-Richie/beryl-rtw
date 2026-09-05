@@ -3850,3 +3850,79 @@ body {
     max-width: none;
   }
 }
+
+/* Live announcement ticker and resilient builder controls */
+.market-utility {
+  overflow: hidden;
+  gap: 24px;
+}
+.market-utility-marquee {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.market-utility-marquee-content {
+  display: inline-flex;
+  min-width: max-content;
+  animation: beryl-utility-marquee 24s linear infinite;
+  will-change: transform;
+}
+.market-utility-marquee-content span {
+  flex: 0 0 auto;
+  padding-right: 4rem;
+}
+.market-utility-secondary {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+@keyframes beryl-utility-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.market-utility:hover .market-utility-marquee-content {
+  animation-play-state: paused;
+}
+.builder-inspector {
+  min-width: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+.builder-inspector-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+}
+.builder-inspector-head > div {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.builder-inspector-head > button {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  margin-left: 0;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+.builder-inspector-head .builder-delete {
+  margin-left: 0;
+}
+@media (max-width: 760px) {
+  .market-utility-secondary {
+    display: none;
+  }
+  .market-utility-marquee-content {
+    animation-duration: 18s;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .market-utility-marquee-content {
+    animation: none;
+  }
+}

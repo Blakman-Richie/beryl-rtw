@@ -1327,8 +1327,15 @@ function Storefront({
         </div>
       )}
       <div className="market-utility">
-        <span>{announcement}</span>
-        <span>Delivery across Nigeria · Worldwide shipping</span>
+        <div className="market-utility-marquee" aria-label={announcement}>
+          <div className="market-utility-marquee-content">
+            <span>{announcement}</span>
+            <span aria-hidden="true">{announcement}</span>
+          </div>
+        </div>
+        <span className="market-utility-secondary">
+          Delivery across Nigeria · Worldwide shipping
+        </span>
       </div>
       <header className="market-header">
         <button
