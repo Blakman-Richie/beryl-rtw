@@ -461,6 +461,17 @@ body {
   place-items: center;
   background: var(--m-lime);
 }
+.market-product-image .market-product-wish {
+  top: 11px;
+  right: 11px;
+  bottom: auto;
+  background: #fff;
+  color: var(--m-ink);
+}
+.market-product-image .market-product-wish.saved {
+  background: var(--m-ink);
+  color: #fff;
+}
 .market-product-copy {
   padding: 13px 1px;
 }
@@ -2485,5 +2496,419 @@ body {
   .market-custom-row.image-left > img,
   .market-custom-row.image-right > img {
     order: 0;
+  }
+}
+
+/* Functional shopping controls and Discover deck */
+.market-filter-panel,
+.market-sort-panel {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  flex-wrap: wrap;
+  margin: -5px 0 20px;
+  padding: 16px;
+  border: 1px solid var(--m-line);
+  background: #fff;
+}
+.market-filter-panel label {
+  display: grid;
+  gap: 6px;
+  min-width: 155px;
+  font-size: 12px;
+}
+.market-filter-panel input {
+  min-height: 40px;
+  border: 1px solid var(--m-line);
+  padding: 8px;
+  font: inherit;
+}
+.market-filter-panel .market-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+}
+.market-filter-panel .market-check input {
+  min-height: auto;
+}
+.market-filter-panel > button {
+  border: 0;
+  background: var(--m-ink);
+  color: #fff;
+  padding: 12px 14px;
+}
+.market-sort-panel {
+  align-items: stretch;
+}
+.market-sort-panel button {
+  padding: 10px 14px;
+  border: 1px solid var(--m-line);
+  background: #fff;
+}
+.market-sort-panel button.active {
+  border-color: var(--m-ink);
+  background: var(--m-ink);
+  color: #fff;
+}
+.market-empty-results {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  padding: 45px 0;
+  color: var(--m-muted);
+}
+.market-empty-results h3 {
+  margin: 0;
+  color: var(--m-ink);
+  font:
+    500 25px "Playfair Display",
+    serif;
+}
+.market-empty-results button {
+  padding: 10px 13px;
+  border: 1px solid var(--m-ink);
+  background: #fff;
+}
+.quick-view-wrap,
+.discover-overlay {
+  position: fixed;
+  z-index: 120;
+  inset: 0;
+}
+.quick-view-scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(6, 21, 13, 0.62);
+}
+.quick-view {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(330px, 0.9fr);
+  max-width: 950px;
+  max-height: min(720px, calc(100vh - 52px));
+  margin: 26px auto;
+  overflow: auto;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+}
+.quick-view > img {
+  width: 100%;
+  height: 100%;
+  min-height: 460px;
+  object-fit: cover;
+}
+.quick-view > div {
+  padding: 55px 42px;
+}
+.quick-view p,
+.discover-deck header p,
+.discover-summary > p {
+  margin: 0 0 12px;
+  color: var(--m-muted);
+  font:
+    11px "DM Mono",
+    monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.quick-view h2 {
+  margin: 0 0 16px;
+  font:
+    500 47px/0.96 "Playfair Display",
+    serif;
+}
+.quick-view strong {
+  display: block;
+  margin: 8px 0;
+  font-size: 19px;
+}
+.quick-view small,
+.quick-view > div > span {
+  display: block;
+  margin: 10px 0 22px;
+  color: var(--m-muted);
+  line-height: 1.6;
+}
+.quick-view-close {
+  position: absolute;
+  z-index: 1;
+  top: 15px;
+  right: 15px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+}
+.quick-view-actions {
+  display: flex;
+  gap: 10px;
+}
+.quick-view-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px;
+  border: 1px solid var(--m-ink);
+  background: var(--m-ink);
+  color: #fff;
+}
+.quick-view-actions button + button {
+  background: #fff;
+  color: var(--m-ink);
+}
+.quick-view-actions .saved {
+  background: #f0f8e8;
+  color: #2d5b1a;
+}
+.discover-overlay {
+  overflow: auto;
+  background: #f4f7f1;
+}
+.discover-deck {
+  width: min(650px, 100%);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 34px 20px 42px;
+  display: grid;
+  place-items: center;
+  align-content: start;
+}
+.discover-deck header {
+  width: 100%;
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 24px;
+}
+.discover-deck header h1,
+.discover-summary h1 {
+  margin: 0;
+  font:
+    500 clamp(33px, 6vw, 54px)/0.98 "Playfair Display",
+    serif;
+}
+.discover-deck header > button,
+.discover-summary > button {
+  border: 1px solid var(--m-line);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px;
+}
+.discover-stage {
+  width: min(430px, 100%);
+  min-height: 525px;
+  position: relative;
+}
+.discover-card {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 1px solid var(--m-line);
+  background: #fff;
+  box-shadow: 0 16px 35px rgba(20, 36, 25, 0.16);
+  cursor: grab;
+  touch-action: pan-y;
+}
+.discover-card:active {
+  cursor: grabbing;
+}
+.discover-card.ghost {
+  inset: 12px -8px -12px 8px;
+  display: grid;
+  place-items: end center;
+  padding: 17px;
+  background: var(--m-lime);
+  color: var(--m-ink);
+  transform: rotate(2deg);
+}
+.discover-card > img {
+  width: 100%;
+  height: 350px;
+  object-fit: cover;
+  pointer-events: none;
+}
+.discover-card > div {
+  padding: 18px 20px 22px;
+}
+.discover-card p {
+  margin: 0 0 9px;
+  color: var(--m-muted);
+  font:
+    10px "DM Mono",
+    monospace;
+  text-transform: uppercase;
+}
+.discover-card h2 {
+  margin: 0;
+  font:
+    500 34px/0.98 "Playfair Display",
+    serif;
+}
+.discover-card span {
+  display: block;
+  min-height: 43px;
+  margin: 12px 0;
+  color: var(--m-muted);
+  line-height: 1.45;
+}
+.discover-card strong {
+  font-size: 18px;
+}
+.discover-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 30px 0 14px;
+}
+.discover-actions button {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--m-line);
+  border-radius: 50%;
+  background: #fff;
+  color: #d55654;
+}
+.discover-actions .discover-add {
+  width: 46px;
+  height: 46px;
+  color: var(--m-ink);
+}
+.discover-actions .discover-like {
+  width: 62px;
+  height: 62px;
+  border: 0;
+  background: #e4536a;
+  color: #fff;
+}
+.discover-deck > small {
+  color: var(--m-muted);
+  text-align: center;
+}
+.discover-summary {
+  width: min(960px, 100%);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 70px 26px;
+  text-align: center;
+}
+.discover-summary > span {
+  display: block;
+  margin: 17px auto 30px;
+  max-width: 430px;
+  color: var(--m-muted);
+  line-height: 1.6;
+}
+.discover-summary > div {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin: 28px 0;
+  text-align: left;
+}
+.discover-summary article {
+  display: grid;
+  gap: 8px;
+}
+.discover-summary article img {
+  width: 100%;
+  aspect-ratio: 0.8;
+  object-fit: cover;
+}
+.discover-summary article button {
+  width: max-content;
+  border: 1px solid var(--m-ink);
+  background: #fff;
+  padding: 8px;
+}
+.discover-summary .discover-close {
+  margin-left: 8px;
+}
+.market-discover-block {
+  min-height: 720px;
+}
+.builder-preview-swipe-card {
+  margin-top: 12px;
+  padding: 18px;
+  border: 1px solid currentColor;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+}
+/* The hero preview is a real full-bleed picture, not a split blue placeholder. */
+.builder-preview-block.hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.builder-preview-block.hero::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: rgba(15, 67, 175, 0.52);
+}
+.builder-preview-block.hero > :not(.builder-preview-hero-image) {
+  position: relative;
+  z-index: 2;
+}
+.builder-preview-block.hero .builder-preview-hero-image {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 1;
+  object-fit: cover;
+}
+@media (max-width: 700px) {
+  .market-filter-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: end;
+  }
+  .market-filter-panel .market-check,
+  .market-filter-panel > button {
+    grid-column: 1 / -1;
+  }
+  .quick-view {
+    grid-template-columns: 1fr;
+    max-height: calc(100vh - 24px);
+    margin: 12px;
+  }
+  .quick-view > img {
+    min-height: 270px;
+    height: 42vh;
+  }
+  .quick-view > div {
+    padding: 30px 24px;
+  }
+  .quick-view h2 {
+    font-size: 38px;
+  }
+  .discover-deck {
+    padding-top: 22px;
+  }
+  .discover-stage {
+    min-height: 490px;
+  }
+  .discover-card > img {
+    height: 305px;
+  }
+  .market-discover-block {
+    min-height: 670px;
   }
 }

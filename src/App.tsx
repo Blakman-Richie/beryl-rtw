@@ -17,6 +17,12 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
+  AnimatePresence,
+  motion,
+  useMotionValue,
+  useTransform,
+} from "framer-motion";
+import {
   ArrowRight,
   Boxes,
   ChevronDown,
@@ -66,7 +72,8 @@ type SectionKind =
   | "promo"
   | "story"
   | "newsletter"
-  | "content";
+  | "content"
+  | "discover";
 type StoreSection = {
   id: string;
   type: SectionKind;
@@ -295,6 +302,11 @@ const sectionMeta: Record<
     icon: Layers3,
     help: "A flexible row with your own words, image, colour and button.",
   },
+  discover: {
+    label: "Discover swipe deck",
+    icon: Heart,
+    help: "A swipeable way for customers to find their next favourite.",
+  },
 };
 const getSection = (items: StoreSection[], type: SectionKind) =>
   items.find((item) => item.type === type && item.visible);
@@ -319,17 +331,56 @@ function IconButton({
 function ProductCard({
   product,
   onAdd,
+  onView,
+  onWish,
+  wished,
 }: {
   product: Product;
   onAdd: (product: Product) => void;
+  onView: (product: Product) => void;
+  onWish: (product: Product) => void;
+  wished: boolean;
 }) {
   return (
-    <article className="market-product-card">
+    <article
+      className="market-product-card"
+      role="button"
+      tabIndex={0}
+      onClick={() => onView(product)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") onView(product);
+      }}
+    >
       <div className="market-product-image">
-        <img src={product.image} alt={product.name} />
+        <img
+          src={product.image || defaultHeroImage}
+          alt={product.name}
+          onError={(event) => {
+            event.currentTarget.src = defaultHeroImage;
+          }}
+        />
         <span>{product.tag}</span>
         <button
-          onClick={() => onAdd(product)}
+          className={
+            wished ? "market-product-wish saved" : "market-product-wish"
+          }
+          onClick={(event) => {
+            event.stopPropagation();
+            onWish(product);
+          }}
+          aria-label={
+            wished
+              ? `Remove ${product.name} from saved pieces`
+              : `Save ${product.name}`
+          }
+        >
+          <Heart size={18} fill={wished ? "currentColor" : "none"} />
+        </button>
+        <button
+          onClick={(event) => {
+            event.stopPropagation();
+            onAdd(product);
+          }}
           aria-label={`Add ${product.name} to bag`}
         >
           <Plus size={19} />
@@ -347,6 +398,204 @@ function ProductCard({
   );
 }
 
+function ProductQuickView({
+  product,
+  onClose,
+  onAdd,
+  onWish,
+  wished,
+}: {
+  product: Product;
+  onClose: () => void;
+  onAdd: (product: Product) => void;
+  onWish: (product: Product) => void;
+  wished: boolean;
+}) {
+  return (
+    <div
+      className="quick-view-wrap"
+      role="dialog"
+      aria-modal="true"
+      aria-label={product.name}
+    >
+      <button
+        className="quick-view-scrim"
+        onClick={onClose}
+        aria-label="Close product details"
+      />
+      <section className="quick-view">
+        <button
+          className="quick-view-close"
+          onClick={onClose}
+          aria-label="Close product details"
+        >
+          <X />
+        </button>
+        <img
+          src={product.image || defaultHeroImage}
+          alt={product.name}
+          onError={(event) => {
+            event.currentTarget.src = defaultHeroImage;
+          }}
+        />
+        <div>
+          <p>
+            {product.type} · {product.tag}
+          </p>
+          <h2>{product.name}</h2>
+          <strong>{product.price}</strong>
+          <small>
+            {product.usd} · {product.stock || 0} pieces available
+          </small>
+          <span>{product.description || product.color}</span>
+          <div className="quick-view-actions">
+            <button onClick={() => onAdd(product)}>
+              Add to bag <ShoppingBag size={17} />
+            </button>
+            <button
+              className={wished ? "saved" : ""}
+              onClick={() => onWish(product)}
+            >
+              <Heart size={17} fill={wished ? "currentColor" : "none"} />{" "}
+              {wished ? "Saved" : "Save"}
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function DiscoverDeck({
+  products,
+  onLike,
+  onSkip,
+  onView,
+  onAdd,
+  onClose,
+}: {
+  products: Product[];
+  onLike: (product: Product) => void;
+  onSkip: (product: Product) => void;
+  onView: (product: Product) => void;
+  onAdd: (product: Product) => void;
+  onClose?: () => void;
+}) {
+  const [index, setIndex] = useState(0);
+  const [liked, setLiked] = useState<Product[]>([]);
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-220, 0, 220], [-10, 0, 10]);
+  const current = products[index];
+  const choose = (direction: "like" | "skip") => {
+    if (!current) return;
+    if (direction === "like") {
+      setLiked((items) => [...items, current]);
+      onLike(current);
+    } else onSkip(current);
+    setIndex((value) => value + 1);
+    x.set(0);
+  };
+  if (!current) {
+    return (
+      <section className="discover-summary">
+        <p>Discover complete</p>
+        <h1>Your picks</h1>
+        <span>
+          {liked.length
+            ? "Save them for later or add one to your bag."
+            : "No pressure—come back when you feel like exploring."}
+        </span>
+        <div>
+          {liked.map((product) => (
+            <article key={product.id}>
+              <img src={product.image || defaultHeroImage} alt="" />
+              <b>{product.name}</b>
+              <button onClick={() => onAdd(product)}>Add to bag</button>
+            </article>
+          ))}
+        </div>
+        <button
+          onClick={() => {
+            setIndex(0);
+            setLiked([]);
+          }}
+        >
+          Start again
+        </button>
+        {onClose && (
+          <button className="discover-close" onClick={onClose}>
+            Back to shop
+          </button>
+        )}
+      </section>
+    );
+  }
+  return (
+    <section className="discover-deck" aria-label="Discover Beryl RTW">
+      <header>
+        <div>
+          <p>Discover</p>
+          <h1>Find your next favourite.</h1>
+        </div>
+        {onClose && (
+          <button onClick={onClose}>
+            Back to shop <X size={17} />
+          </button>
+        )}
+      </header>
+      <div className="discover-stage">
+        <div className="discover-card ghost">
+          <span>Keep exploring</span>
+        </div>
+        <motion.article
+          className="discover-card"
+          style={{ x, rotate }}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.85}
+          onDragEnd={(_, info) => {
+            if (info.offset.x > 110) choose("like");
+            if (info.offset.x < -110) choose("skip");
+          }}
+          onClick={() => onView(current)}
+        >
+          <img src={current.image || defaultHeroImage} alt={current.name} />
+          <div>
+            <p>
+              {current.type} · {current.tag}
+            </p>
+            <h2>{current.name}</h2>
+            <span>{current.description || current.color}</span>
+            <strong>{current.price}</strong>
+          </div>
+        </motion.article>
+      </div>
+      <div className="discover-actions">
+        <button onClick={() => choose("skip")} aria-label="Skip this piece">
+          <X size={23} />
+        </button>
+        <button
+          className="discover-add"
+          onClick={() => onAdd(current)}
+          aria-label="Add to bag"
+        >
+          <ShoppingBag size={20} />
+        </button>
+        <button
+          className="discover-like"
+          onClick={() => choose("like")}
+          aria-label="Like this piece"
+        >
+          <Heart size={23} fill="currentColor" />
+        </button>
+      </div>
+      <small>
+        {index + 1} of {products.length} · Swipe right to save, left to skip
+      </small>
+    </section>
+  );
+}
+
 function Storefront({
   products,
   sections,
@@ -359,6 +608,31 @@ function Storefront({
   const [cart, setCart] = useState<Product[]>([]);
   const [bagOpen, setBagOpen] = useState(false);
   const [filter, setFilter] = useState("All");
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [sortOpen, setSortOpen] = useState(false);
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [sort, setSort] = useState("newest");
+  const [wishlistOpen, setWishlistOpen] = useState(false);
+  const [wishlist, setWishlist] = useState<number[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("beryl-wishlist") || "[]");
+    } catch {
+      return [];
+    }
+  });
+  const [quickView, setQuickView] = useState<Product | null>(null);
+  const [discoverOpen, setDiscoverOpen] = useState(false);
+  const [visitorSessionId] = useState(() => {
+    const existing = localStorage.getItem("beryl-visitor-session");
+    if (existing) return existing;
+    const next = crypto.randomUUID();
+    localStorage.setItem("beryl-visitor-session", next);
+    return next;
+  });
   const [menuOpen, setMenuOpen] = useState(false);
   const [notice, setNotice] = useState("");
   const hero = getSection(sections, "hero");
@@ -367,15 +641,44 @@ function Storefront({
   const promo = getSection(sections, "promo");
   const story = getSection(sections, "story");
   const newsletter = getSection(sections, "newsletter");
+  const discover = getSection(sections, "discover");
   const types = ["All", "Dresses", "Sets", "Tops", "Skirts"];
-  const visibleProducts = useMemo(
-    () =>
-      (filter === "All"
-        ? products
-        : products.filter((product) => product.type === filter)
-      ).filter((product) => product.status !== "archived"),
-    [filter, products],
-  );
+  useEffect(() => {
+    const timer = window.setTimeout(
+      () => setSearchQuery(searchInput.trim().toLowerCase()),
+      260,
+    );
+    return () => window.clearTimeout(timer);
+  }, [searchInput]);
+  useEffect(() => {
+    localStorage.setItem("beryl-wishlist", JSON.stringify(wishlist));
+  }, [wishlist]);
+  const visibleProducts = useMemo(() => {
+    const filtered = products.filter((product) => {
+      const productPrice = priceNumber(product.price);
+      const searchMatch =
+        !searchQuery ||
+        [product.name, product.type, product.tag, product.color]
+          .join(" ")
+          .toLowerCase()
+          .includes(searchQuery);
+      return (
+        (filter === "All" || product.type === filter) &&
+        product.status !== "archived" &&
+        searchMatch &&
+        (!minPrice || productPrice >= Number(minPrice)) &&
+        (!maxPrice || productPrice <= Number(maxPrice)) &&
+        (!inStockOnly || (product.stock || 0) > 0)
+      );
+    });
+    return [...filtered].sort((a, b) => {
+      if (sort === "low") return priceNumber(a.price) - priceNumber(b.price);
+      if (sort === "high") return priceNumber(b.price) - priceNumber(a.price);
+      if (sort === "best")
+        return Number(/best/i.test(b.tag)) - Number(/best/i.test(a.tag));
+      return b.id - a.id;
+    });
+  }, [filter, products, searchQuery, minPrice, maxPrice, inStockOnly, sort]);
   const add = (product: Product) => {
     setCart((current) => [...current, product]);
     setBagOpen(true);
@@ -390,6 +693,58 @@ function Storefront({
     if (!link || link === "#shop") return jump("shop");
     if (link.startsWith("#")) return jump(link.slice(1));
     window.location.assign(link);
+  };
+  const toggleWishlist = (product: Product) => {
+    setWishlist((current) => {
+      const saved = current.includes(product.id);
+      const next = saved
+        ? current.filter((id) => id !== product.id)
+        : [...current, product.id];
+      const database = supabase;
+      if (database) {
+        void database.auth.getUser().then(({ data }) => {
+          if (!data.user) return;
+          if (saved)
+            return database
+              .from("wishlist_items")
+              .delete()
+              .eq("customer_id", data.user.id)
+              .eq("product_id", product.id);
+          return database
+            .from("wishlist_items")
+            .upsert({ customer_id: data.user.id, product_id: product.id });
+        });
+      }
+      setNotice(
+        saved
+          ? `${product.name} removed from saved pieces`
+          : `${product.name} saved for later`,
+      );
+      window.setTimeout(() => setNotice(""), 2200);
+      return next;
+    });
+  };
+  const recordSwipe = (product: Product, direction: "like" | "skip") => {
+    if (supabase)
+      void supabase.from("swipe_events").insert({
+        product_id: product.id,
+        session_id: visitorSessionId,
+        direction,
+      });
+  };
+  const likeFromDiscover = (product: Product) => {
+    if (!wishlist.includes(product.id)) toggleWishlist(product);
+    recordSwipe(product, "like");
+  };
+  const savedProducts = products.filter((product) =>
+    wishlist.includes(product.id),
+  );
+  const resetFilters = () => {
+    setMinPrice("");
+    setMaxPrice("");
+    setInStockOnly(false);
+    setFilter("All");
+    setSearchInput("");
   };
   const cartTotal = cart.reduce(
     (sum, product) => sum + priceNumber(product.price),
@@ -428,15 +783,36 @@ function Storefront({
           <input
             aria-label="Search the collection"
             placeholder="Search dresses, sets and more"
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                setSearchQuery(searchInput.trim().toLowerCase());
+                jump("shop");
+              }
+            }}
           />
-          <button>Search</button>
+          <button
+            onClick={() => {
+              setSearchQuery(searchInput.trim().toLowerCase());
+              jump("shop");
+            }}
+          >
+            Search
+          </button>
         </div>
         <div className="market-actions">
-          <IconButton label="Account">
+          <IconButton
+            label="Account"
+            onClick={() => window.location.assign("/admin")}
+          >
             <Users size={20} />
           </IconButton>
-          <IconButton label="Saved pieces">
-            <Heart size={20} />
+          <IconButton
+            label="Saved pieces"
+            onClick={() => setWishlistOpen(true)}
+          >
+            <Heart size={20} fill={wishlist.length ? "currentColor" : "none"} />
           </IconButton>
           <button className="market-cart" onClick={() => setBagOpen(true)}>
             <ShoppingBag size={19} /> Bag <b>{cart.length}</b>
@@ -472,6 +848,14 @@ function Storefront({
         <button onClick={() => jump("story")}>Our story</button>
         <button className="market-nav-sale" onClick={() => jump("shop")}>
           New drop
+        </button>
+        <button
+          onClick={() => {
+            setDiscoverOpen(true);
+            setMenuOpen(false);
+          }}
+        >
+          Discover
         </button>
       </nav>
       {bagOpen && (
@@ -547,6 +931,87 @@ function Storefront({
             )}
           </aside>
         </>
+      )}
+      {wishlistOpen && (
+        <>
+          <button
+            className="market-scrim"
+            onClick={() => setWishlistOpen(false)}
+            aria-label="Close saved pieces"
+          />
+          <aside className="market-bag market-wishlist">
+            <div className="market-bag-head">
+              <div>
+                <span>Saved pieces</span>
+                <h2>
+                  {savedProducts.length}{" "}
+                  {savedProducts.length === 1 ? "favourite" : "favourites"}
+                </h2>
+              </div>
+              <button
+                onClick={() => setWishlistOpen(false)}
+                aria-label="Close saved pieces"
+              >
+                <X />
+              </button>
+            </div>
+            {savedProducts.length ? (
+              <div className="market-bag-items">
+                {savedProducts.map((product) => (
+                  <div key={product.id}>
+                    <img src={product.image || defaultHeroImage} alt="" />
+                    <section>
+                      <h3>{product.name}</h3>
+                      <p>{product.price}</p>
+                      <button onClick={() => toggleWishlist(product)}>
+                        Remove
+                      </button>
+                      <button
+                        onClick={() => {
+                          setWishlistOpen(false);
+                          setQuickView(product);
+                        }}
+                      >
+                        View details
+                      </button>
+                    </section>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="market-bag-empty">
+                <Heart size={30} />
+                <p>Save pieces you love and find them here.</p>
+                <button onClick={() => setWishlistOpen(false)}>
+                  Keep browsing
+                </button>
+              </div>
+            )}
+          </aside>
+        </>
+      )}
+      {quickView && (
+        <ProductQuickView
+          product={quickView}
+          onClose={() => setQuickView(null)}
+          onAdd={add}
+          onWish={toggleWishlist}
+          wished={wishlist.includes(quickView.id)}
+        />
+      )}
+      {discoverOpen && (
+        <div className="discover-overlay">
+          <DiscoverDeck
+            products={products.filter(
+              (product) => product.status !== "archived",
+            )}
+            onLike={likeFromDiscover}
+            onSkip={(product) => recordSwipe(product, "skip")}
+            onView={setQuickView}
+            onAdd={add}
+            onClose={() => setDiscoverOpen(false)}
+          />
+        </div>
       )}
       <main id="top">
         {hero && (
@@ -635,14 +1100,91 @@ function Storefront({
                 <span>{productSection.description}</span>
               </div>
               <div className="market-controls">
-                <button>
+                <button
+                  onClick={() => {
+                    setFilterOpen((value) => !value);
+                    setSortOpen(false);
+                  }}
+                  aria-expanded={filterOpen}
+                >
                   <SlidersHorizontal size={15} /> Filter
                 </button>
-                <button>
+                <button
+                  onClick={() => {
+                    setSortOpen((value) => !value);
+                    setFilterOpen(false);
+                  }}
+                  aria-expanded={sortOpen}
+                >
                   <ChevronDown size={15} /> Sort
                 </button>
               </div>
             </div>
+            {filterOpen && (
+              <div className="market-filter-panel">
+                <label>
+                  Minimum price (₦)
+                  <input
+                    type="number"
+                    min="0"
+                    value={minPrice}
+                    onChange={(event) => setMinPrice(event.target.value)}
+                    placeholder="0"
+                  />
+                </label>
+                <label>
+                  Maximum price (₦)
+                  <input
+                    type="number"
+                    min="0"
+                    value={maxPrice}
+                    onChange={(event) => setMaxPrice(event.target.value)}
+                    placeholder="Any"
+                  />
+                </label>
+                <label className="market-check">
+                  <input
+                    type="checkbox"
+                    checked={inStockOnly}
+                    onChange={(event) => setInStockOnly(event.target.checked)}
+                  />{" "}
+                  In stock only
+                </label>
+                <button
+                  onClick={() => {
+                    resetFilters();
+                    setFilterOpen(false);
+                  }}
+                >
+                  Clear filters
+                </button>
+              </div>
+            )}
+            {sortOpen && (
+              <div
+                className="market-sort-panel"
+                role="listbox"
+                aria-label="Sort products"
+              >
+                {[
+                  { value: "newest", label: "Newest" },
+                  { value: "low", label: "Price: low to high" },
+                  { value: "high", label: "Price: high to low" },
+                  { value: "best", label: "Best-selling" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    className={sort === option.value ? "active" : ""}
+                    onClick={() => {
+                      setSort(option.value);
+                      setSortOpen(false);
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="market-filter-row">
               {types.map((type) => (
                 <button
@@ -656,9 +1198,23 @@ function Storefront({
             </div>
             <div className="market-product-grid">
               {visibleProducts.map((product) => (
-                <ProductCard key={product.id} product={product} onAdd={add} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAdd={add}
+                  onView={setQuickView}
+                  onWish={toggleWishlist}
+                  wished={wishlist.includes(product.id)}
+                />
               ))}
             </div>
+            {!visibleProducts.length && (
+              <div className="market-empty-results">
+                <Search size={28} />
+                <h3>No pieces matched that search.</h3>
+                <button onClick={resetFilters}>Clear search and filters</button>
+              </div>
+            )}
           </section>
         )}
         {promo && (
@@ -741,6 +1297,25 @@ function Storefront({
               </div>
             </section>
           ))}
+        {discover && (
+          <section
+            className="market-discover-block"
+            style={{
+              backgroundColor: discover.backgroundColor,
+              color: discover.textColor,
+            }}
+          >
+            <DiscoverDeck
+              products={products.filter(
+                (product) => product.status !== "archived",
+              )}
+              onLike={likeFromDiscover}
+              onSkip={(product) => recordSwipe(product, "skip")}
+              onView={setQuickView}
+              onAdd={add}
+            />
+          </section>
+        )}
         {newsletter && (
           <section className="market-newsletter">
             <p>{newsletter.eyebrow}</p>
@@ -1115,6 +1690,16 @@ function StorefrontBuilder({
                       )}
                     </div>
                     {section.cta && <span>{section.cta}</span>}
+                  </>
+                )}
+                {section.type === "discover" && (
+                  <>
+                    <small>{section.eyebrow}</small>
+                    <h2>{section.title}</h2>
+                    <p>{section.description}</p>
+                    <div className="builder-preview-swipe-card">
+                      <Heart size={18} /> Swipe to discover
+                    </div>
                   </>
                 )}
               </button>

@@ -42,3 +42,28 @@ create policy "Authenticated admin can manage storefront layout" on public.store
 insert into storage.buckets (id, name, public) values ('brand-assets', 'brand-assets', true) on conflict (id) do nothing;
 create policy "Anyone can view brand assets" on storage.objects for select using (bucket_id = 'brand-assets');
 create policy "Authenticated admin can upload brand assets" on storage.objects for insert to authenticated with check (bucket_id = 'brand-assets');
+
+-- Storefront engagement: customer saved pieces and anonymous swipe signals.
+create table if not exists public.wishlist_items (
+  customer_id uuid not null references auth.users(id) on delete cascade,
+  product_id bigint not null references public.products(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (customer_id, product_id)
+);
+
+alter table public.wishlist_items enable row level security;
+create policy "Customers manage their own saved pieces" on public.wishlist_items
+  for all to authenticated using (auth.uid() = customer_id) with check (auth.uid() = customer_id);
+
+create table if not exists public.swipe_events (
+  id bigint generated always as identity primary key,
+  product_id bigint not null references public.products(id) on delete cascade,
+  session_id text not null,
+  direction text not null check (direction in ('like', 'skip')),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists swipe_events_product_created_idx on public.swipe_events (product_id, created_at desc);
+alter table public.swipe_events enable row level security;
+create policy "Anyone can record a swipe choice" on public.swipe_events for insert with check (true);
+create policy "Authenticated admin can view swipe choices" on public.swipe_events for select to authenticated using (true);
