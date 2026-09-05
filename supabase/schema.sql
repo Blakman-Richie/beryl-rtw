@@ -28,6 +28,7 @@ create policy "Authenticated admin can manage brand settings" on public.brand_se
 alter table public.products add column if not exists stock integer not null default 0;
 alter table public.products add column if not exists status text not null default 'active';
 alter table public.products add column if not exists description text;
+alter table public.brand_settings add column if not exists announcement text;
 
 create table if not exists public.storefront_layout (
   id integer primary key default 1 check (id = 1),

@@ -4100,13 +4100,17 @@ export default function App() {
       });
     supabase
       .from("brand_settings")
-      .select("logo_url")
+      .select("logo_url,announcement")
       .eq("id", 1)
       .maybeSingle()
       .then(({ data }) => {
         if (data?.logo_url) {
           setLogoState(data.logo_url);
           localStorage.setItem("beryl-logo", data.logo_url);
+        }
+        if (data?.announcement) {
+          setAnnouncement(data.announcement);
+          localStorage.setItem("beryl-announcement", data.announcement);
         }
       });
     supabase
@@ -4147,9 +4151,16 @@ export default function App() {
     setSections(items);
     localStorage.setItem("beryl-storefront-layout", JSON.stringify(items));
   };
-  const updateAnnouncement = (value: string) => {
+  const updateAnnouncement = async (value: string) => {
     setAnnouncement(value);
     localStorage.setItem("beryl-announcement", value);
+    if (supabase) {
+      await supabase.from("brand_settings").upsert({
+        id: 1,
+        announcement: value,
+        updated_at: new Date().toISOString(),
+      });
+    }
   };
   const goStore = () => {
     window.history.pushState({}, "", "/");
