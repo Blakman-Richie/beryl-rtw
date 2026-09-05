@@ -2912,3 +2912,296 @@ body {
     min-height: 670px;
   }
 }
+
+/* Builder variants and content-led landing-page blocks */
+.builder-visibility-controls {
+  display: grid;
+  gap: 8px;
+  margin: 6px 0 16px;
+}
+.builder-visibility-controls label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.builder-visibility-controls input {
+  width: auto;
+  min-height: auto;
+}
+.builder-column-editor > button {
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid var(--m-line);
+  background: #fff;
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+}
+.market-hero.image-left .market-hero-copy {
+  order: 2;
+}
+.market-hero.image-left .market-hero-art {
+  order: 1;
+}
+.market-hero.full-bleed {
+  position: relative;
+  display: block;
+  min-height: 590px;
+  overflow: hidden;
+  background: var(--m-ink);
+}
+.market-hero.full-bleed .market-hero-art {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  min-height: 100%;
+}
+.market-hero.full-bleed .market-hero-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(11, 35, 25, 0.82),
+    rgba(11, 35, 25, 0.15)
+  );
+}
+.market-hero.full-bleed .market-hero-art picture,
+.market-hero.full-bleed .market-hero-art img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+.market-hero.full-bleed .market-hero-copy {
+  position: relative;
+  z-index: 1;
+  width: min(680px, 100%);
+  color: #fff;
+}
+.market-feature-block {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: clamp(45px, 7vw, 95px) clamp(20px, 7vw, 100px);
+}
+.feature-heading {
+  max-width: 650px;
+  margin-bottom: 32px;
+}
+.feature-heading p,
+.market-feature-block > p {
+  margin: 0 0 12px;
+  font:
+    11px "DM Mono",
+    monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.feature-heading h2,
+.market-feature-block > h2 {
+  margin: 0;
+  font:
+    500 clamp(38px, 5.2vw, 72px)/0.98 "Playfair Display",
+    serif;
+}
+.feature-heading span,
+.market-feature-block > span {
+  display: block;
+  margin-top: 18px;
+  line-height: 1.6;
+}
+.feature-cards,
+.feature-size-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.feature-cards article,
+.feature-size-grid article {
+  min-height: 180px;
+  padding: 25px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  background: color-mix(in srgb, #fff 80%, transparent);
+}
+.feature-cards h3 {
+  margin: 9px 0;
+  font:
+    500 24px "Playfair Display",
+    serif;
+}
+.feature-cards p,
+.feature-size-grid span {
+  margin: 0;
+  line-height: 1.55;
+  color: color-mix(in srgb, currentColor 74%, transparent);
+}
+.feature-stars {
+  color: #d6a719;
+  letter-spacing: 2px;
+}
+.market-feature-block > button {
+  margin-top: 26px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 15px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+}
+.feature-video {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  background: #10251b;
+  color: #fff;
+}
+.feature-video video {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  object-fit: cover;
+  background: #24352c;
+}
+.feature-video > div {
+  padding: clamp(34px, 5vw, 72px);
+  display: grid;
+  align-content: center;
+}
+.feature-video h2 {
+  margin: 0;
+  font:
+    500 clamp(39px, 5vw, 66px)/0.98 "Playfair Display",
+    serif;
+}
+.feature-video span {
+  margin: 20px 0;
+  line-height: 1.6;
+}
+.feature-video button {
+  width: max-content;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px 15px;
+  border: 1px solid #fff;
+  background: transparent;
+  color: #fff;
+}
+.feature-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.feature-gallery img {
+  width: 100%;
+  min-height: 230px;
+  height: 100%;
+  object-fit: cover;
+}
+.feature-gallery img:first-child {
+  grid-column: span 2;
+  grid-row: span 2;
+  min-height: 470px;
+}
+.feature-gallery article {
+  min-height: 180px;
+  padding: 22px;
+  border: 1px dashed currentColor;
+  display: grid;
+  align-content: end;
+  gap: 8px;
+}
+.feature-faq {
+  max-width: 850px;
+}
+.feature-faq details {
+  border-top: 1px solid color-mix(in srgb, currentColor 27%, transparent);
+}
+.feature-faq summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 20px 0;
+  cursor: pointer;
+  font-weight: 650;
+  list-style: none;
+}
+.feature-faq summary::-webkit-details-marker {
+  display: none;
+}
+.feature-faq p {
+  max-width: 720px;
+  margin: -3px 0 22px;
+  line-height: 1.65;
+}
+.market-feature-block.countdown {
+  text-align: center;
+  background: var(--m-lime);
+}
+.market-feature-block.countdown > span {
+  max-width: 600px;
+  margin: 18px auto;
+}
+.feature-countdown {
+  display: block;
+  margin: 27px 0;
+  font:
+    500 clamp(46px, 8vw, 100px)/1 "DM Mono",
+    monospace;
+  letter-spacing: -0.09em;
+}
+.feature-size-grid article {
+  display: grid;
+  gap: 12px;
+  align-content: center;
+  min-height: 130px;
+}
+.feature-size-grid b {
+  font-size: 22px;
+}
+.market-feature-block.gallery,
+.market-feature-block.video {
+  max-width: none;
+  padding-left: max(20px, calc((100vw - 1400px) / 2));
+  padding-right: max(20px, calc((100vw - 1400px) / 2));
+}
+.hide-on-desktop {
+  display: none !important;
+}
+@media (max-width: 700px) {
+  .hide-on-desktop {
+    display: block !important;
+  }
+  .hide-on-mobile {
+    display: none !important;
+  }
+  .market-hero.image-left .market-hero-copy,
+  .market-hero.image-left .market-hero-art {
+    order: initial;
+  }
+  .market-hero.full-bleed {
+    min-height: 610px;
+  }
+  .market-hero.full-bleed .market-hero-copy {
+    min-height: 610px;
+    display: grid;
+    align-content: end;
+  }
+  .feature-cards,
+  .feature-size-grid {
+    grid-template-columns: 1fr;
+  }
+  .feature-video {
+    grid-template-columns: 1fr;
+  }
+  .feature-video video {
+    min-height: 250px;
+  }
+  .feature-gallery {
+    grid-template-columns: 1fr 1fr;
+  }
+  .feature-gallery img:first-child {
+    min-height: 280px;
+  }
+}

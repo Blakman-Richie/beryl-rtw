@@ -73,7 +73,14 @@ type SectionKind =
   | "story"
   | "newsletter"
   | "content"
-  | "discover";
+  | "discover"
+  | "testimonials"
+  | "video"
+  | "gallery"
+  | "faq"
+  | "countdown"
+  | "size-guide"
+  | "journal";
 type StoreSection = {
   id: string;
   type: SectionKind;
@@ -87,8 +94,16 @@ type StoreSection = {
   backgroundColor?: string;
   textColor?: string;
   columns?: number;
-  layout?: "split" | "stacked" | "image-left" | "image-right";
+  layout?: "split" | "stacked" | "image-left" | "image-right" | "full-bleed";
   buttonLink?: string;
+  videoUrl?: string;
+  images?: string[];
+  contentItems?: Array<{ heading: string; text: string; image?: string }>;
+  mobileImage?: string;
+  hideOnMobile?: boolean;
+  hideOnDesktop?: boolean;
+  scheduledAt?: string;
+  countdownTo?: string;
   columnItems?: Array<{
     heading: string;
     text: string;
@@ -307,9 +322,47 @@ const sectionMeta: Record<
     icon: Heart,
     help: "A swipeable way for customers to find their next favourite.",
   },
+  testimonials: {
+    label: "Testimonials",
+    icon: Heart,
+    help: "Customer reviews that build confidence.",
+  },
+  video: {
+    label: "Video hero",
+    icon: ImagePlus,
+    help: "A campaign film or styling video.",
+  },
+  gallery: {
+    label: "Lookbook gallery",
+    icon: Boxes,
+    help: "A multi-image Instagram or lookbook grid.",
+  },
+  faq: {
+    label: "FAQ",
+    icon: CircleHelp,
+    help: "Answers about fit, delivery and care.",
+  },
+  countdown: {
+    label: "Countdown banner",
+    icon: Sparkles,
+    help: "A timed launch, sale or limited drop.",
+  },
+  "size-guide": {
+    label: "Size guide",
+    icon: ClipboardList,
+    help: "Fit notes customers can check before buying.",
+  },
+  journal: {
+    label: "Journal teaser",
+    icon: Layers3,
+    help: "Stories, styling notes and search-friendly editorial links.",
+  },
 };
+const sectionIsLive = (item: StoreSection) =>
+  item.visible &&
+  (!item.scheduledAt || new Date(item.scheduledAt).getTime() <= Date.now());
 const getSection = (items: StoreSection[], type: SectionKind) =>
-  items.find((item) => item.type === type && item.visible);
+  items.find((item) => item.type === type && sectionIsLive(item));
 const priceNumber = (value: string) =>
   Number(value.replace(/[^0-9]/g, "")) || 0;
 function IconButton({
@@ -596,6 +649,224 @@ function DiscoverDeck({
   );
 }
 
+const defaultBlockItems = (type: SectionKind) => {
+  if (type === "faq")
+    return [
+      {
+        heading: "How does sizing work?",
+        text: "Use the size guide and product fit notes. If you are between sizes, send us a WhatsApp message before ordering.",
+      },
+      {
+        heading: "Do you ship internationally?",
+        text: "Yes. We deliver across Nigeria and can arrange worldwide shipping.",
+      },
+      {
+        heading: "How should I care for Ankara?",
+        text: "Wash gently inside-out in cool water and press on a low setting.",
+      },
+    ];
+  if (type === "testimonials")
+    return [
+      {
+        heading: "Amara, Lagos",
+        text: "The fit was beautiful and the fabric looked even better in person.",
+      },
+      {
+        heading: "Kemi, London",
+        text: "A real statement piece that still felt easy enough for every day.",
+      },
+      {
+        heading: "Dami, Abuja",
+        text: "My order arrived neatly packed and exactly as pictured.",
+      },
+    ];
+  if (type === "size-guide")
+    return [
+      { heading: "XS–S", text: "Bust 32–35 in · Waist 25–28 in" },
+      { heading: "M", text: "Bust 36–38 in · Waist 29–31 in" },
+      { heading: "L–XL", text: "Bust 39–43 in · Waist 32–36 in" },
+    ];
+  return [
+    {
+      heading: "A Beryl note",
+      text: "Style, stories and print inspiration from the studio.",
+    },
+    {
+      heading: "Wear it your way",
+      text: "Easy ways to make a standout piece feel like you.",
+    },
+    {
+      heading: "The making of a drop",
+      text: "A closer look at print, fit and thoughtful finishing.",
+    },
+  ];
+};
+
+function CountdownBanner({ target }: { target?: string }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const remaining = Math.max(0, new Date(target || now).getTime() - now);
+  const hours = Math.floor(remaining / 3_600_000);
+  const minutes = Math.floor((remaining % 3_600_000) / 60_000);
+  const seconds = Math.floor((remaining % 60_000) / 1000);
+  return (
+    <strong className="feature-countdown">
+      {String(hours).padStart(2, "0")}:{String(minutes).padStart(2, "0")}:
+      {String(seconds).padStart(2, "0")}
+    </strong>
+  );
+}
+
+function StorefrontFeatureBlock({
+  section,
+  onFollow,
+}: {
+  section: StoreSection;
+  onFollow: (link?: string) => void;
+}) {
+  const items = section.contentItems?.length
+    ? section.contentItems
+    : defaultBlockItems(section.type);
+  const className = `market-feature-block ${section.type} ${section.hideOnMobile ? "hide-on-mobile" : ""} ${section.hideOnDesktop ? "hide-on-desktop" : ""}`;
+  const style = {
+    backgroundColor: section.backgroundColor,
+    color: section.textColor,
+  };
+  if (section.type === "video")
+    return (
+      <section className={className} style={style}>
+        <div className="feature-video">
+          <video
+            controls
+            poster={section.image || defaultHeroImage}
+            src={section.videoUrl}
+          />
+          <div>
+            <p>{section.eyebrow}</p>
+            <h2>{section.title}</h2>
+            <span>{section.description}</span>
+            {section.cta && (
+              <button onClick={() => onFollow(section.buttonLink)}>
+                {section.cta} <ArrowRight size={16} />
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  if (section.type === "gallery") {
+    const images = [section.image, ...(section.images || [])].filter(
+      Boolean,
+    ) as string[];
+    return (
+      <section className={className} style={style}>
+        <div className="feature-heading">
+          <p>{section.eyebrow}</p>
+          <h2>{section.title}</h2>
+          <span>{section.description}</span>
+        </div>
+        <div className="feature-gallery">
+          {images.length
+            ? images.map((image, index) => (
+                <img
+                  key={`${image}-${index}`}
+                  src={image}
+                  alt="Beryl RTW lookbook"
+                />
+              ))
+            : items.map((item, index) => (
+                <article key={index}>
+                  <b>{item.heading}</b>
+                  <span>{item.text}</span>
+                </article>
+              ))}
+        </div>
+      </section>
+    );
+  }
+  if (section.type === "faq")
+    return (
+      <section className={className} style={style}>
+        <div className="feature-heading">
+          <p>{section.eyebrow}</p>
+          <h2>{section.title}</h2>
+          <span>{section.description}</span>
+        </div>
+        <div className="feature-faq">
+          {items.map((item, index) => (
+            <details key={index}>
+              <summary>
+                {item.heading}
+                <Plus size={16} />
+              </summary>
+              <p>{item.text}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+    );
+  if (section.type === "countdown")
+    return (
+      <section className={className} style={style}>
+        <p>{section.eyebrow}</p>
+        <h2>{section.title}</h2>
+        <span>{section.description}</span>
+        <CountdownBanner target={section.countdownTo} />
+        {section.cta && (
+          <button onClick={() => onFollow(section.buttonLink)}>
+            {section.cta} <ArrowRight size={16} />
+          </button>
+        )}
+      </section>
+    );
+  if (section.type === "size-guide")
+    return (
+      <section className={className} style={style}>
+        <div className="feature-heading">
+          <p>{section.eyebrow}</p>
+          <h2>{section.title}</h2>
+          <span>{section.description}</span>
+        </div>
+        <div className="feature-size-grid">
+          {items.map((item, index) => (
+            <article key={index}>
+              <b>{item.heading}</b>
+              <span>{item.text}</span>
+            </article>
+          ))}
+        </div>
+      </section>
+    );
+  return (
+    <section className={className} style={style}>
+      <div className="feature-heading">
+        <p>{section.eyebrow}</p>
+        <h2>{section.title}</h2>
+        <span>{section.description}</span>
+      </div>
+      <div className="feature-cards">
+        {items.map((item, index) => (
+          <article key={index}>
+            {section.type === "testimonials" && (
+              <span className="feature-stars">★★★★★</span>
+            )}
+            <h3>{item.heading}</h3>
+            <p>{item.text}</p>
+          </article>
+        ))}
+      </div>
+      {section.cta && (
+        <button onClick={() => onFollow(section.buttonLink)}>
+          {section.cta} <ArrowRight size={16} />
+        </button>
+      )}
+    </section>
+  );
+}
+
 function Storefront({
   products,
   sections,
@@ -642,6 +913,18 @@ function Storefront({
   const story = getSection(sections, "story");
   const newsletter = getSection(sections, "newsletter");
   const discover = getSection(sections, "discover");
+  const featureSections = sections.filter(
+    (section) =>
+      [
+        "testimonials",
+        "video",
+        "gallery",
+        "faq",
+        "countdown",
+        "size-guide",
+        "journal",
+      ].includes(section.type) && sectionIsLive(section),
+  );
   const types = ["All", "Dresses", "Sets", "Tops", "Skirts"];
   useEffect(() => {
     const timer = window.setTimeout(
@@ -1016,7 +1299,7 @@ function Storefront({
       <main id="top">
         {hero && (
           <section
-            className="market-hero"
+            className={`market-hero ${hero.layout || "image-right"} ${hero.hideOnMobile ? "hide-on-mobile" : ""} ${hero.hideOnDesktop ? "hide-on-desktop" : ""}`}
             style={{ backgroundColor: hero.backgroundColor }}
           >
             <div className="market-hero-copy" style={{ color: hero.textColor }}>
@@ -1036,10 +1319,18 @@ function Storefront({
               </div>
             </div>
             <div className="market-hero-art">
-              <img
-                src={hero.image || defaultHeroImage}
-                alt="Beryl RTW Ankara collection"
-              />
+              <picture>
+                {hero.mobileImage && (
+                  <source
+                    media="(max-width: 700px)"
+                    srcSet={hero.mobileImage}
+                  />
+                )}
+                <img
+                  src={hero.image || defaultHeroImage}
+                  alt="Beryl RTW Ankara collection"
+                />
+              </picture>
               <div className="market-hero-sticker">
                 New
                 <br />
@@ -1316,6 +1607,13 @@ function Storefront({
             />
           </section>
         )}
+        {featureSections.map((section) => (
+          <StorefrontFeatureBlock
+            key={section.id}
+            section={section}
+            onFollow={followLink}
+          />
+        ))}
         {newsletter && (
           <section className="market-newsletter">
             <p>{newsletter.eyebrow}</p>
@@ -1473,6 +1771,25 @@ function StorefrontBuilder({
       columnItems: type === "content" ? makeColumnItems(2) : undefined,
       layout: type === "content" ? "split" : undefined,
       buttonLink: "#shop",
+      contentItems: ["testimonials", "faq", "size-guide", "journal"].includes(
+        type,
+      )
+        ? defaultBlockItems(type)
+        : undefined,
+      images:
+        type === "gallery"
+          ? [
+              defaultHeroImage,
+              "https://i.pinimg.com/736x/c9/18/01/c91801c158eac12765057920e58a5f34.jpg",
+              "https://images.ctfassets.net/7bobsix9kke6/1D4OA5xtYKxbHYJYfMNkau/7a9b9d04b2495bb296a8776605bd1d5e/stylegoestochurch_91806993_151752566367367_4535886086198977974_n.jpg",
+            ]
+          : undefined,
+      countdownTo:
+        type === "countdown"
+          ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+              .toISOString()
+              .slice(0, 16)
+          : undefined,
     };
     onChange([...sections, section]);
     setSelectedId(id);
@@ -1483,7 +1800,40 @@ function StorefrontBuilder({
     onChange(remaining);
     setSelectedId(remaining[0]?.id || "");
   };
-  const uploadSectionImage = async (file?: File) => {
+  const duplicateSelected = () => {
+    if (!selected) return;
+    const copy = {
+      ...selected,
+      id: `${selected.type}-${Date.now()}`,
+      title: `${selected.title} copy`,
+      scheduledAt: undefined,
+    };
+    onChange([...sections, copy]);
+    setSelectedId(copy.id);
+  };
+  const revertToPublished = () => {
+    try {
+      const published = JSON.parse(
+        localStorage.getItem("beryl-last-published-layout") || "",
+      );
+      if (
+        Array.isArray(published) &&
+        published.length &&
+        window.confirm("Revert this canvas to the last published version?")
+      ) {
+        onChange(published as StoreSection[]);
+        setSelectedId(published[0].id);
+      }
+    } catch {
+      window.alert(
+        "There is no previously published layout saved on this device yet.",
+      );
+    }
+  };
+  const uploadSectionImage = async (
+    file?: File,
+    field: "image" | "mobileImage" = "image",
+  ) => {
     if (!file || !selected) return;
     if (supabase) {
       const path = `storefront/${Date.now()}-${file.name.replace(/[^a-z0-9.]+/gi, "-")}`;
@@ -1495,11 +1845,11 @@ function StorefrontBuilder({
         return;
       }
       const { data } = supabase.storage.from("brand-assets").getPublicUrl(path);
-      updateSection({ image: data.publicUrl });
+      updateSection({ [field]: data.publicUrl });
       return;
     }
     const reader = new FileReader();
-    reader.onload = () => updateSection({ image: String(reader.result) });
+    reader.onload = () => updateSection({ [field]: String(reader.result) });
     reader.readAsDataURL(file);
   };
   return (
@@ -1566,6 +1916,9 @@ function StorefrontBuilder({
             {sections.filter((section) => section.visible).length} blocks live
           </div>
           <div>
+            <button onClick={revertToPublished}>
+              <ChevronLeft size={16} /> Revert
+            </button>
             <button>
               <Eye size={16} /> Preview
             </button>
@@ -1702,6 +2055,31 @@ function StorefrontBuilder({
                     </div>
                   </>
                 )}
+                {[
+                  "testimonials",
+                  "video",
+                  "gallery",
+                  "faq",
+                  "countdown",
+                  "size-guide",
+                  "journal",
+                ].includes(section.type) && (
+                  <>
+                    {section.image && (
+                      <img
+                        className="builder-preview-content-image"
+                        src={section.image}
+                        alt="Block preview"
+                      />
+                    )}
+                    <small>{section.eyebrow}</small>
+                    <h2>{section.title}</h2>
+                    <p>{section.description}</p>
+                    <div className="builder-preview-feature">
+                      {sectionMeta[section.type].label}
+                    </div>
+                  </>
+                )}
               </button>
             ))}
         </div>
@@ -1718,6 +2096,9 @@ function StorefrontBuilder({
                 onClick={() => updateSection({ visible: !selected.visible })}
               >
                 {selected.visible ? "Hide" : "Show"}
+              </button>
+              <button onClick={duplicateSelected}>
+                <Plus size={15} /> Duplicate
               </button>
               <button
                 className="builder-delete"
@@ -1808,6 +2189,114 @@ function StorefrontBuilder({
                   updateSection({ image: event.target.value })
                 }
                 placeholder="Paste an image link"
+              />
+            </label>
+            <label className="builder-photo-control">
+              Mobile-only photo <small>(optional)</small>
+              {selected.mobileImage && (
+                <img src={selected.mobileImage} alt="Mobile section preview" />
+              )}
+              <span>
+                <Upload size={15} /> Upload mobile photo
+              </span>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(event) =>
+                  uploadSectionImage(event.target.files?.[0], "mobileImage")
+                }
+              />
+            </label>
+            <div className="builder-visibility-controls">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={selected.hideOnMobile || false}
+                  onChange={(event) =>
+                    updateSection({ hideOnMobile: event.target.checked })
+                  }
+                />{" "}
+                Hide on mobile
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={selected.hideOnDesktop || false}
+                  onChange={(event) =>
+                    updateSection({ hideOnDesktop: event.target.checked })
+                  }
+                />{" "}
+                Hide on desktop
+              </label>
+            </div>
+            {selected.type === "hero" && (
+              <label>
+                Hero layout
+                <select
+                  value={selected.layout || "image-right"}
+                  onChange={(event) =>
+                    updateSection({
+                      layout: event.target.value as StoreSection["layout"],
+                    })
+                  }
+                >
+                  <option value="image-right">Image on the right</option>
+                  <option value="image-left">Image on the left</option>
+                  <option value="full-bleed">Full-bleed photo</option>
+                  <option value="stacked">Stacked</option>
+                </select>
+              </label>
+            )}
+            {selected.type === "video" && (
+              <label>
+                Video link
+                <input
+                  value={selected.videoUrl || ""}
+                  onChange={(event) =>
+                    updateSection({ videoUrl: event.target.value })
+                  }
+                  placeholder="MP4 or video embed URL"
+                />
+              </label>
+            )}
+            {selected.type === "gallery" && (
+              <label>
+                Gallery photos <small>(one link per line)</small>
+                <textarea
+                  rows={5}
+                  value={(selected.images || []).join("\n")}
+                  onChange={(event) =>
+                    updateSection({
+                      images: event.target.value
+                        .split("\n")
+                        .map((value) => value.trim())
+                        .filter(Boolean),
+                    })
+                  }
+                  placeholder="Paste photo links, one on each line"
+                />
+              </label>
+            )}
+            {selected.type === "countdown" && (
+              <label>
+                Countdown ends
+                <input
+                  type="datetime-local"
+                  value={selected.countdownTo || ""}
+                  onChange={(event) =>
+                    updateSection({ countdownTo: event.target.value })
+                  }
+                />
+              </label>
+            )}
+            <label>
+              Schedule publish <small>(optional)</small>
+              <input
+                type="datetime-local"
+                value={selected.scheduledAt || ""}
+                onChange={(event) =>
+                  updateSection({ scheduledAt: event.target.value })
+                }
               />
             </label>
             {selected.type === "content" && (
@@ -1925,6 +2414,68 @@ function StorefrontBuilder({
                   ))}
                 </div>
               </>
+            )}
+            {["testimonials", "faq", "size-guide", "journal"].includes(
+              selected.type,
+            ) && (
+              <div className="builder-column-editor">
+                <b>Edit cards and answers</b>
+                {(
+                  selected.contentItems || defaultBlockItems(selected.type)
+                ).map((item, index) => (
+                  <fieldset key={index}>
+                    <legend>Item {index + 1}</legend>
+                    <input
+                      value={item.heading}
+                      onChange={(event) => {
+                        const items = [
+                          ...(selected.contentItems ||
+                            defaultBlockItems(selected.type)),
+                        ];
+                        items[index] = {
+                          ...items[index],
+                          heading: event.target.value,
+                        };
+                        updateSection({ contentItems: items });
+                      }}
+                      placeholder="Heading"
+                    />
+                    <textarea
+                      rows={3}
+                      value={item.text}
+                      onChange={(event) => {
+                        const items = [
+                          ...(selected.contentItems ||
+                            defaultBlockItems(selected.type)),
+                        ];
+                        items[index] = {
+                          ...items[index],
+                          text: event.target.value,
+                        };
+                        updateSection({ contentItems: items });
+                      }}
+                      placeholder="Text"
+                    />
+                  </fieldset>
+                ))}
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateSection({
+                      contentItems: [
+                        ...(selected.contentItems ||
+                          defaultBlockItems(selected.type)),
+                        {
+                          heading: "New item",
+                          text: "Write your content here.",
+                        },
+                      ],
+                    })
+                  }
+                >
+                  <Plus size={14} /> Add item
+                </button>
+              </div>
             )}
             <div className="builder-colour-grid">
               <label>
@@ -2576,6 +3127,10 @@ function MerchantAdmin({
   };
   const saveLayout = async () => {
     localStorage.setItem("beryl-storefront-layout", JSON.stringify(sections));
+    localStorage.setItem(
+      "beryl-last-published-layout",
+      JSON.stringify(sections),
+    );
     if (supabase)
       await supabase
         .from("storefront_layout")
