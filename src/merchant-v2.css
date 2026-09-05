@@ -4092,10 +4092,9 @@ body {
   margin: 0 clamp(18px, 5vw, 72px) 20px;
   padding: 16px;
   display: grid;
-  grid-template-columns: minmax(220px, 2fr) repeat(
-      3,
-      minmax(125px, 1fr)
-    ) auto auto;
+  grid-template-columns:
+    minmax(220px, 2fr) repeat(3, minmax(125px, 1fr))
+    auto auto;
   align-items: end;
   gap: 12px;
   border: 1px solid var(--m-line);
@@ -4260,5 +4259,87 @@ body {
   .market-shop-results-head > span {
     display: block;
     margin-top: 14px;
+  }
+}
+
+.market-shop-page-head-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 16px;
+}
+.market-shop-page-head-actions > button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  background: var(--m-lime);
+  color: var(--m-ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font:
+    10px "DM Mono",
+    monospace;
+  text-transform: uppercase;
+}
+.shop-swipe-modal {
+  position: fixed;
+  z-index: 220;
+  inset: 0;
+  padding: 20px;
+  display: grid;
+  place-items: center;
+}
+.shop-swipe-modal-scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(6, 21, 13, 0.72);
+}
+.shop-swipe-modal-card {
+  position: relative;
+  z-index: 1;
+  width: min(720px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  background: #f4f7f1;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.35);
+}
+.shop-swipe-modal-card .discover-deck {
+  min-height: 0;
+  padding: 28px 28px 34px;
+}
+.shop-swipe-modal-card .discover-deck header {
+  margin-bottom: 18px;
+}
+.shop-swipe-modal-card .discover-stage {
+  min-height: min(525px, 58vh);
+}
+.shop-swipe-modal-card .discover-card > img {
+  height: min(350px, 42vh);
+}
+.shop-swipe-modal-card .discover-actions {
+  padding-top: 22px;
+}
+@media (max-width: 560px) {
+  .market-shop-page-head-actions {
+    align-items: flex-start;
+    margin-top: 20px;
+  }
+  .shop-swipe-modal {
+    padding: 8px;
+  }
+  .shop-swipe-modal-card {
+    max-height: calc(100vh - 16px);
+  }
+  .shop-swipe-modal-card .discover-deck {
+    padding: 22px 14px 28px;
+  }
+  .shop-swipe-modal-card .discover-stage {
+    min-height: 450px;
+  }
+  .shop-swipe-modal-card .discover-card > img {
+    height: 285px;
   }
 }

@@ -968,6 +968,7 @@ function ShopPage({
 }) {
   const params = new URLSearchParams(window.location.search);
   const [category, setCategory] = useState(params.get("category") || "All");
+  const [swipeOpen, setSwipeOpen] = useState(false);
   const [query, setQuery] = useState(params.get("q") || "");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
@@ -1026,7 +1027,12 @@ function ShopPage({
             that feels like you.
           </span>
         </div>
-        <strong>{filteredProducts.length} pieces</strong>
+        <div className="market-shop-page-head-actions">
+          <strong>{filteredProducts.length} pieces</strong>
+          <button onClick={() => setSwipeOpen(true)}>
+            <Heart size={16} fill="currentColor" /> Open swipe mode
+          </button>
+        </div>
       </header>
       <div className="market-shop-filters">
         <label className="market-shop-search">
@@ -1092,25 +1098,33 @@ function ShopPage({
           </button>
         ))}
       </div>
-      <div className="market-shop-swipe">
-        <div>
-          <p>Swipe to discover</p>
-          <h2>Find your next favourite.</h2>
-          <span>
-            Right to save, left to skip. Tap a card for the full details.
-          </span>
+      {swipeOpen && (
+        <div className="shop-swipe-modal">
+          <button
+            className="shop-swipe-modal-scrim"
+            onClick={() => setSwipeOpen(false)}
+            aria-label="Close swipe mode"
+          />
+          <div className="shop-swipe-modal-card">
+            <DiscoverDeck
+              key={[
+                category,
+                query,
+                minPrice,
+                maxPrice,
+                sort,
+                inStockOnly,
+              ].join("-")}
+              products={filteredProducts}
+              onLike={onLike}
+              onSkip={onSkip}
+              onView={onDetails}
+              onAdd={onAdd}
+              onClose={() => setSwipeOpen(false)}
+            />
+          </div>
         </div>
-        <DiscoverDeck
-          key={[category, query, minPrice, maxPrice, sort, inStockOnly].join(
-            "-",
-          )}
-          products={filteredProducts}
-          onLike={onLike}
-          onSkip={onSkip}
-          onView={onDetails}
-          onAdd={onAdd}
-        />
-      </div>
+      )}
       <div className="market-shop-results-head">
         <div>
           <p>Browse the edit</p>
