@@ -931,6 +931,10 @@ function Storefront({
     return next;
   });
   const [menuOpen, setMenuOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessage, setChatMessage] = useState(
+    "Hello Beryl RTW, I would like to ask about your collection.",
+  );
   const [notice, setNotice] = useState("");
   const hero = getSection(sections, "hero");
   const categories = getSection(sections, "categories");
@@ -951,7 +955,7 @@ function Storefront({
         "journal",
       ].includes(section.type) && sectionIsLive(section),
   );
-  const types = ["All", "Dresses", "Sets", "Tops", "Skirts"];
+  const types = ["All", "Dresses", "Sets", "Tops", "Skirts", "Jumpsuits"];
   useEffect(() => {
     const timer = window.setTimeout(
       () => setSearchQuery(searchInput.trim().toLowerCase()),
@@ -1112,8 +1116,8 @@ function Storefront({
         </div>
         <div className="market-actions">
           <IconButton
-            label="Account"
-            onClick={() => window.location.assign("/admin")}
+            label="Chat with Beryl RTW on WhatsApp"
+            onClick={() => setChatOpen((value) => !value)}
           >
             <Users size={20} />
           </IconButton>
@@ -1128,6 +1132,34 @@ function Storefront({
           </button>
         </div>
       </header>
+      {chatOpen && (
+        <aside className="market-chat-popover" aria-label="Chat with Beryl RTW">
+          <h3>Talk to Beryl</h3>
+          <p>Questions about fit, fabric or delivery? We reply on WhatsApp.</p>
+          <textarea
+            value={chatMessage}
+            onChange={(event) => setChatMessage(event.target.value)}
+            aria-label="WhatsApp message"
+          />
+          <div className="market-chat-popover-actions">
+            <button onClick={() => setChatOpen(false)}>Close</button>
+            <button
+              onClick={() => {
+                const number =
+                  import.meta.env.VITE_WHATSAPP_NUMBER || "2349069495391";
+                window.open(
+                  `https://wa.me/${number}?text=${encodeURIComponent(chatMessage)}`,
+                  "_blank",
+                  "noopener,noreferrer",
+                );
+                setChatOpen(false);
+              }}
+            >
+              Open WhatsApp
+            </button>
+          </div>
+        </aside>
+      )}
       <nav className={menuOpen ? "market-nav open" : "market-nav"}>
         <button onClick={() => jump("shop")}>Shop all</button>
         <button
@@ -1333,7 +1365,7 @@ function Storefront({
               <h1>{hero.title}</h1>
               <span>{hero.description}</span>
               <button onClick={() => followLink(hero.buttonLink)}>
-                {hero.cta} <ArrowRight size={18} />
+                {hero.cta}
               </button>
               <div className="market-hero-proof">
                 <span>
@@ -1378,7 +1410,7 @@ function Storefront({
                   jump("shop");
                 }}
               >
-                {categories.cta} <ArrowRight size={16} />
+                {categories.cta}
               </button>
             </div>
             <div className="market-category-row">
@@ -1390,6 +1422,15 @@ function Storefront({
                     jump("shop");
                   }}
                 >
+                  <img
+                    className="market-category-photo"
+                    src={
+                      products.find((product) => product.type === type)
+                        ?.image || defaultHeroImage
+                    }
+                    alt=""
+                    aria-hidden="true"
+                  />
                   <span className={`market-category-icon cat-${index + 1}`}>
                     {index === 0
                       ? "⌁"
@@ -1400,14 +1441,30 @@ function Storefront({
                           : "◌"}
                   </span>
                   <b>{type}</b>
-                  <small>
-                    Shop now <ArrowRight size={13} />
-                  </small>
+                  <small>Shop now</small>
                 </button>
               ))}
             </div>
           </section>
         )}
+        <section className="market-trust-row" aria-label="Beryl RTW promises">
+          <article>
+            <strong>Made in Lagos</strong>
+            <span>Thoughtful Ankara pieces, cut and finished locally.</span>
+          </article>
+          <article>
+            <strong>Worldwide delivery</strong>
+            <span>Reliable shipping across Nigeria and the diaspora.</span>
+          </article>
+          <article>
+            <strong>Easy WhatsApp help</strong>
+            <span>Real styling and fit support from our team.</span>
+          </article>
+          <article>
+            <strong>Secure checkout</strong>
+            <span>Shop confidently with clear prices and updates.</span>
+          </article>
+        </section>
         {productSection && (
           <section className="market-shop" id="shop">
             <div className="market-section-title">
@@ -1538,31 +1595,29 @@ function Storefront({
           <section className="market-promo">
             <div className="market-promo-image">
               <img
-                src="https://www.maeotti.com/cdn/shop/files/3W1A1099-Edit__2_1080x.jpg?v=1776802139"
+                src={promo.image || defaultHeroImage}
                 alt="Beryl RTW campaign"
+                onError={(event) => {
+                  event.currentTarget.src = defaultHeroImage;
+                }}
               />
             </div>
             <div>
               <p>{promo.eyebrow}</p>
               <h2>{promo.title}</h2>
               <span>{promo.description}</span>
-              <button onClick={() => jump("shop")}>
-                {promo.cta} <ArrowRight size={18} />
-              </button>
+              <button onClick={() => jump("shop")}>{promo.cta}</button>
             </div>
           </section>
         )}
         {story && (
           <section className="market-story" id="story">
-            <span>01</span>
             <div>
               <p>{story.eyebrow}</p>
               <h2>{story.title}</h2>
             </div>
             <p>{story.description}</p>
-            <button onClick={() => jump("shop")}>
-              {story.cta} <ArrowRight size={17} />
-            </button>
+            <button onClick={() => jump("shop")}>{story.cta}</button>
           </section>
         )}
         {sections
@@ -1658,12 +1713,30 @@ function Storefront({
                 required
                 placeholder="Your email address"
               />
-              <button>
-                {newsletter.cta} <ArrowRight size={17} />
-              </button>
+              <button>{newsletter.cta}</button>
             </form>
           </section>
         )}
+        <section
+          className="market-instagram"
+          aria-label="Beryl RTW on Instagram"
+        >
+          <div className="market-instagram-head">
+            <h2>Seen in the wild.</h2>
+            <a href="https://instagram.com" target="_blank" rel="noreferrer">
+              @berylrtw on Instagram
+            </a>
+          </div>
+          <div className="market-instagram-grid">
+            {products.slice(0, 6).map((product) => (
+              <img
+                key={`ig-${product.id}`}
+                src={product.image || defaultHeroImage}
+                alt={product.name}
+              />
+            ))}
+          </div>
+        </section>
       </main>
       <footer className="market-footer">
         <a className="market-brand" href="#top">
@@ -1680,10 +1753,10 @@ function Storefront({
           <br />
           Designed in Lagos. Worn everywhere.
         </p>
+        <span className="market-tagline">Elegance · Excellence · Modest</span>
         <div>
           <button onClick={() => jump("shop")}>Shop</button>
           <button onClick={() => jump("story")}>About</button>
-          <a href="/admin">Merchant studio</a>
         </div>
         <small>© 2026 Beryl RTW</small>
       </footer>
