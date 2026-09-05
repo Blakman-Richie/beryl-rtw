@@ -1063,8 +1063,50 @@ function Storefront({
     (sum, product) => sum + priceNumber(product.price),
     0,
   );
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        name: "Beryl RTW",
+        description: "Elevated Ankara ready-to-wear designed in Lagos.",
+        url: window.location.origin,
+      },
+      {
+        "@type": "ItemList",
+        name: "Beryl RTW collection",
+        itemListElement: products
+          .filter((product) => product.status !== "archived")
+          .map((product, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            item: {
+              "@type": "Product",
+              name: product.name,
+              description: product.description || product.color,
+              image: product.image || defaultHeroImage,
+              brand: { "@type": "Brand", name: "Beryl RTW" },
+              offers: {
+                "@type": "Offer",
+                priceCurrency: "NGN",
+                price: priceNumber(product.price),
+                availability:
+                  (product.stock || 0) > 0
+                    ? "https://schema.org/InStock"
+                    : "https://schema.org/OutOfStock",
+                itemCondition: "https://schema.org/NewCondition",
+              },
+            },
+          })),
+      },
+    ],
+  };
   return (
     <div className="market-storefront">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       {notice && (
         <div className="market-toast" role="status">
           {notice}
@@ -1449,20 +1491,28 @@ function Storefront({
         )}
         <section className="market-trust-row" aria-label="Beryl RTW promises">
           <article>
-            <strong>Made in Lagos</strong>
-            <span>Thoughtful Ankara pieces, cut and finished locally.</span>
+            <strong>Premium Ankara</strong>
+            <span>Rich, expressive fabrics selected for lasting wear.</span>
           </article>
           <article>
-            <strong>Worldwide delivery</strong>
-            <span>Reliable shipping across Nigeria and the diaspora.</span>
+            <strong>Limited pieces</strong>
+            <span>
+              Small-batch drops made to feel personal, never mass-made.
+            </span>
           </article>
           <article>
-            <strong>Easy WhatsApp help</strong>
-            <span>Real styling and fit support from our team.</span>
+            <strong>Perfect fit</strong>
+            <span>
+              Thoughtful cuts and an easy fit guide for every silhouette.
+            </span>
           </article>
           <article>
-            <strong>Secure checkout</strong>
-            <span>Shop confidently with clear prices and updates.</span>
+            <strong>Easy returns</strong>
+            <span>Simple support when a piece is not quite right.</span>
+          </article>
+          <article>
+            <strong>Here for you</strong>
+            <span>Excellent customer care before and after your order.</span>
           </article>
         </section>
         {productSection && (
