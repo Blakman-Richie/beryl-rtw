@@ -246,7 +246,7 @@ const defaultSections: StoreSection[] = [
     visible: true,
     theme: "cobalt",
     image: defaultHeroImage,
-    buttonLink: "#shop",
+    buttonLink: "/shop",
   },
   {
     id: "categories",
@@ -947,6 +947,202 @@ function DiscoverDeck({
   );
 }
 
+function ShopPage({
+  products,
+  onBack,
+  onAdd,
+  onDetails,
+  onWish,
+  onLike,
+  onSkip,
+  wishlist,
+}: {
+  products: Product[];
+  onBack: () => void;
+  onAdd: (product: Product) => void;
+  onDetails: (product: Product) => void;
+  onWish: (product: Product) => void;
+  onLike: (product: Product) => void;
+  onSkip: (product: Product) => void;
+  wishlist: number[];
+}) {
+  const params = new URLSearchParams(window.location.search);
+  const [category, setCategory] = useState(params.get("category") || "All");
+  const [query, setQuery] = useState(params.get("q") || "");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [sort, setSort] = useState("newest");
+  const types = ["All", "Dresses", "Sets", "Tops", "Skirts", "Jumpsuits"];
+  const filteredProducts = useMemo(() => {
+    const filtered = products.filter((product) => {
+      const price = priceNumber(product.price);
+      const searchable = [
+        product.name,
+        product.type,
+        product.tag,
+        product.color,
+      ]
+        .join(" ")
+        .toLowerCase();
+      return (
+        product.status !== "archived" &&
+        (category === "All" || product.type === category) &&
+        (!query || searchable.includes(query.toLowerCase())) &&
+        (!minPrice || price >= Number(minPrice)) &&
+        (!maxPrice || price <= Number(maxPrice)) &&
+        (!inStockOnly || (product.stock || 0) > 0)
+      );
+    });
+    return [...filtered].sort((a, b) => {
+      if (sort === "low") return priceNumber(a.price) - priceNumber(b.price);
+      if (sort === "high") return priceNumber(b.price) - priceNumber(a.price);
+      if (sort === "stock") return (b.stock || 0) - (a.stock || 0);
+      return b.id - a.id;
+    });
+  }, [category, inStockOnly, maxPrice, minPrice, products, query, sort]);
+  const reset = () => {
+    setCategory("All");
+    setQuery("");
+    setMinPrice("");
+    setMaxPrice("");
+    setInStockOnly(false);
+    setSort("newest");
+  };
+  return (
+    <section className="market-shop-page">
+      <div className="market-shop-page-topline">
+        <button onClick={onBack}>
+          <ChevronLeft size={16} /> Back to home
+        </button>
+        <span>Shop Beryl RTW</span>
+      </div>
+      <header className="market-shop-page-head">
+        <div>
+          <p>The Beryl edit</p>
+          <h1>Shop the collection.</h1>
+          <span>
+            Swipe through every Ankara piece, or use the filters to find the one
+            that feels like you.
+          </span>
+        </div>
+        <strong>{filteredProducts.length} pieces</strong>
+      </header>
+      <div className="market-shop-filters">
+        <label className="market-shop-search">
+          Search
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Dresses, sets, colour..."
+          />
+        </label>
+        <label>
+          Minimum price (₦)
+          <input
+            type="number"
+            min="0"
+            value={minPrice}
+            onChange={(event) => setMinPrice(event.target.value)}
+            placeholder="0"
+          />
+        </label>
+        <label>
+          Maximum price (₦)
+          <input
+            type="number"
+            min="0"
+            value={maxPrice}
+            onChange={(event) => setMaxPrice(event.target.value)}
+            placeholder="Any"
+          />
+        </label>
+        <label>
+          Sort by
+          <select
+            value={sort}
+            onChange={(event) => setSort(event.target.value)}
+          >
+            <option value="newest">Latest drop</option>
+            <option value="low">Price: low to high</option>
+            <option value="high">Price: high to low</option>
+            <option value="stock">Most pieces available</option>
+          </select>
+        </label>
+        <label className="market-shop-check">
+          <input
+            type="checkbox"
+            checked={inStockOnly}
+            onChange={(event) => setInStockOnly(event.target.checked)}
+          />
+          In stock only
+        </label>
+        <button className="market-shop-reset" onClick={reset}>
+          Clear filters
+        </button>
+      </div>
+      <div className="market-shop-category-pills" aria-label="Shop categories">
+        {types.map((type) => (
+          <button
+            key={type}
+            className={category === type ? "active" : ""}
+            onClick={() => setCategory(type)}
+          >
+            {type === "Sets" ? "Two-piece sets" : type}
+          </button>
+        ))}
+      </div>
+      <div className="market-shop-swipe">
+        <div>
+          <p>Swipe to discover</p>
+          <h2>Find your next favourite.</h2>
+          <span>
+            Right to save, left to skip. Tap a card for the full details.
+          </span>
+        </div>
+        <DiscoverDeck
+          key={[category, query, minPrice, maxPrice, sort, inStockOnly].join(
+            "-",
+          )}
+          products={filteredProducts}
+          onLike={onLike}
+          onSkip={onSkip}
+          onView={onDetails}
+          onAdd={onAdd}
+        />
+      </div>
+      <div className="market-shop-results-head">
+        <div>
+          <p>Browse the edit</p>
+          <h2>Every piece, your way.</h2>
+        </div>
+        <span>{filteredProducts.length} available now</span>
+      </div>
+      {filteredProducts.length ? (
+        <div className="market-product-grid">
+          {filteredProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onAdd={onAdd}
+              onView={onDetails}
+              onDetails={onDetails}
+              onWish={onWish}
+              wished={wishlist.includes(product.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="market-empty-results">
+          <Search size={28} />
+          <h3>No pieces matched those filters.</h3>
+          <button onClick={reset}>Clear filters</button>
+        </div>
+      )}
+    </section>
+  );
+}
+
 const defaultBlockItems = (type: SectionKind) => {
   if (type === "faq")
     return [
@@ -1472,6 +1668,9 @@ function Storefront({
   const [aboutRoute, setAboutRoute] = useState(() =>
     ["/about", "/our-story"].includes(window.location.pathname),
   );
+  const [shopRoute, setShopRoute] = useState(
+    () => window.location.pathname === "/shop",
+  );
   const [discoverOpen, setDiscoverOpen] = useState(false);
   const [visitorSessionId] = useState(() => {
     const existing = localStorage.getItem("beryl-visitor-session");
@@ -1492,7 +1691,6 @@ function Storefront({
   const promo = getSection(sections, "promo");
   const story = getSection(sections, "story");
   const newsletter = getSection(sections, "newsletter");
-  const discover = getSection(sections, "discover");
   const featureSections = sections.filter(
     (section) =>
       [
@@ -1533,16 +1731,25 @@ function Storefront({
         setCategoryRoute(nextCategory);
         setFilter(nextCategory);
         setAboutRoute(false);
+        setShopRoute(false);
       } else if (["/about", "/our-story"].includes(window.location.pathname)) {
         setAboutRoute(true);
+        setShopRoute(false);
+        setDetailProduct(null);
+        setCategoryRoute(null);
+      } else if (window.location.pathname === "/shop") {
+        setShopRoute(true);
+        setAboutRoute(false);
         setDetailProduct(null);
         setCategoryRoute(null);
       } else if (!match) {
         setAboutRoute(false);
+        setShopRoute(false);
         setCategoryRoute(null);
         setFilter("All");
       } else {
         setAboutRoute(false);
+        setShopRoute(false);
         setCategoryRoute(null);
       }
     };
@@ -1586,8 +1793,25 @@ function Storefront({
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
     setMenuOpen(false);
   };
+  const openShop = (type = "All", queryValue = "") => {
+    setShopRoute(true);
+    setAboutRoute(false);
+    setDetailProduct(null);
+    setCategoryRoute(null);
+    const params = new URLSearchParams();
+    if (type !== "All") params.set("category", type);
+    if (queryValue.trim()) params.set("q", queryValue.trim());
+    const queryString = params.toString();
+    const path = "/shop" + (queryString ? "?" + queryString : "");
+    window.history.pushState({}, "", path);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setMenuOpen(false);
+  };
   const followLink = (link?: string) => {
-    if (!link || link === "#shop") return jump("shop");
+    if (!link || link === "#shop" || link === "/shop" || link === "shop") {
+      openShop();
+      return;
+    }
     if (["/about", "/our-story", "about", "our-story"].includes(link)) {
       openAbout();
       return;
@@ -1596,6 +1820,7 @@ function Storefront({
     window.location.assign(link);
   };
   const openAbout = () => {
+    setShopRoute(false);
     setDetailProduct(null);
     setCategoryRoute(null);
     setAboutRoute(true);
@@ -1604,6 +1829,7 @@ function Storefront({
     setMenuOpen(false);
   };
   const openProductDetails = (product: Product) => {
+    setShopRoute(false);
     setAboutRoute(false);
     setCategoryRoute(null);
     window.history.pushState({}, "", `/products/${product.id}`);
@@ -1611,6 +1837,7 @@ function Storefront({
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const openCategory = (type: string) => {
+    setShopRoute(false);
     setAboutRoute(false);
     setDetailProduct(null);
     setCategoryRoute(type === "All" ? null : type);
@@ -1630,12 +1857,26 @@ function Storefront({
     setDetailProduct(null);
     setCategoryRoute(null);
     setAboutRoute(false);
+    setShopRoute(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const closeAbout = () => {
     window.history.pushState({}, "", "/");
     setAboutRoute(false);
+    setShopRoute(false);
     setFilter("All");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  const closeShop = () => {
+    window.history.pushState({}, "", "/");
+    setShopRoute(false);
+    setFilter("All");
+    setSearchInput("");
+    setSearchQuery("");
+    setMinPrice("");
+    setMaxPrice("");
+    setInStockOnly(false);
+    setSort("newest");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const toggleWishlist = (product: Product) => {
@@ -1781,14 +2022,14 @@ function Storefront({
             onKeyDown={(event) => {
               if (event.key === "Enter") {
                 setSearchQuery(searchInput.trim().toLowerCase());
-                jump("shop");
+                openShop("All", searchInput);
               }
             }}
           />
           <button
             onClick={() => {
               setSearchQuery(searchInput.trim().toLowerCase());
-              jump("shop");
+              openShop("All", searchInput);
             }}
           >
             Search
@@ -1841,7 +2082,9 @@ function Storefront({
         </aside>
       )}
       <nav className={menuOpen ? "market-nav open" : "market-nav"}>
-        <button onClick={() => openCategory("All")}>Shop all</button>
+        <button className="market-nav-shop" onClick={() => openShop()}>
+          Shop now
+        </button>
         <button
           onClick={() => {
             openCategory("Dresses");
@@ -1940,7 +2183,7 @@ function Storefront({
                 <button
                   onClick={() => {
                     setBagOpen(false);
-                    jump("shop");
+                    openShop();
                   }}
                 >
                   Start shopping
@@ -2032,7 +2275,18 @@ function Storefront({
         </div>
       )}
       <main id="top">
-        {aboutRoute ? (
+        {shopRoute ? (
+          <ShopPage
+            products={products}
+            onBack={closeShop}
+            onAdd={add}
+            onDetails={openProductDetails}
+            onWish={toggleWishlist}
+            onLike={likeFromDiscover}
+            onSkip={(product) => recordSwipe(product, "skip")}
+            wishlist={wishlist}
+          />
+        ) : aboutRoute ? (
           <AboutPage
             sections={aboutSections}
             products={products}
@@ -2119,7 +2373,7 @@ function Storefront({
             </section>
           )
         )}
-        {!aboutRoute && !detailProduct && !categoryRoute && (
+        {!shopRoute && !aboutRoute && !detailProduct && !categoryRoute && (
           <>
             {categories && (
               <section className="market-categories">
@@ -2418,25 +2672,6 @@ function Storefront({
                   </div>
                 </section>
               ))}
-            {discover && (
-              <section
-                className="market-discover-block"
-                style={{
-                  backgroundColor: discover.backgroundColor,
-                  color: discover.textColor,
-                }}
-              >
-                <DiscoverDeck
-                  products={products.filter(
-                    (product) => product.status !== "archived",
-                  )}
-                  onLike={likeFromDiscover}
-                  onSkip={(product) => recordSwipe(product, "skip")}
-                  onView={setQuickView}
-                  onAdd={add}
-                />
-              </section>
-            )}
             {featureSections.map((section) => (
               <StorefrontFeatureBlock
                 key={section.id}

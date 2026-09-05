@@ -3976,14 +3976,18 @@ body {
 }
 .market-about-empty p {
   margin: 0;
-  font: 10px "DM Mono", monospace;
+  font:
+    10px "DM Mono",
+    monospace;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 .market-about-empty h1 {
   max-width: 760px;
   margin: 0;
-  font: 500 clamp(46px, 7vw, 86px)/0.95 "Playfair Display", serif;
+  font:
+    500 clamp(46px, 7vw, 86px)/0.95 "Playfair Display",
+    serif;
   letter-spacing: -0.06em;
 }
 .market-about-empty button {
@@ -3991,7 +3995,9 @@ body {
   border: 0;
   background: var(--m-lime);
   color: var(--m-ink);
-  font: 10px "DM Mono", monospace;
+  font:
+    10px "DM Mono",
+    monospace;
   text-transform: uppercase;
 }
 .market-about-categories,
@@ -4008,5 +4014,251 @@ body {
   }
   .market-about-hero {
     min-height: 0;
+  }
+}
+
+/* Dedicated shop and swipe discovery page */
+.market-shop-page {
+  background: var(--m-cream);
+}
+.market-shop-page-topline {
+  min-height: 62px;
+  padding: 0 clamp(18px, 5vw, 72px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--m-line);
+  background: #fff;
+  color: var(--m-muted);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.market-shop-page-topline button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--m-ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  text-transform: inherit;
+}
+.market-shop-page-head {
+  padding: clamp(52px, 8vw, 100px) clamp(18px, 5vw, 72px) 34px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+}
+.market-shop-page-head p,
+.market-shop-results-head p,
+.market-shop-swipe > div > p {
+  margin: 0 0 15px;
+  color: var(--m-purple);
+  font:
+    10px "DM Mono",
+    monospace;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.market-shop-page-head h1,
+.market-shop-results-head h2,
+.market-shop-swipe h2 {
+  margin: 0;
+  font:
+    500 clamp(42px, 6.5vw, 86px)/0.92 "Playfair Display",
+    serif;
+  letter-spacing: -0.06em;
+}
+.market-shop-page-head span {
+  display: block;
+  max-width: 520px;
+  margin-top: 20px;
+  color: var(--m-muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+.market-shop-page-head > strong {
+  flex: 0 0 auto;
+  color: var(--m-purple);
+  font:
+    14px "DM Mono",
+    monospace;
+  text-transform: uppercase;
+}
+.market-shop-filters {
+  margin: 0 clamp(18px, 5vw, 72px) 20px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) repeat(
+      3,
+      minmax(125px, 1fr)
+    ) auto auto;
+  align-items: end;
+  gap: 12px;
+  border: 1px solid var(--m-line);
+  background: #fff;
+}
+.market-shop-filters label {
+  display: grid;
+  gap: 7px;
+  color: var(--m-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+.market-shop-filters input,
+.market-shop-filters select {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 11px;
+  border: 1px solid var(--m-line);
+  background: #fff;
+  color: var(--m-ink);
+  font:
+    13px "Montserrat",
+    sans-serif;
+}
+.market-shop-check {
+  display: flex !important;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 8px !important;
+  min-height: 42px;
+  white-space: nowrap;
+}
+.market-shop-check input {
+  width: 16px;
+  min-height: 16px;
+}
+.market-shop-reset {
+  min-height: 42px;
+  padding: 0 13px;
+  border: 1px solid var(--m-ink);
+  background: var(--m-ink);
+  color: #fff;
+  font:
+    10px "DM Mono",
+    monospace;
+  text-transform: uppercase;
+}
+.market-shop-category-pills {
+  padding: 0 clamp(18px, 5vw, 72px) 45px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.market-shop-category-pills button {
+  padding: 10px 15px;
+  border: 1px solid var(--m-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--m-ink);
+  font-size: 12px;
+}
+.market-shop-category-pills button.active {
+  border-color: var(--m-ink);
+  background: var(--m-ink);
+  color: #fff;
+}
+.market-shop-swipe {
+  padding: clamp(52px, 8vw, 105px) 18px 85px;
+  display: grid;
+  grid-template-columns: minmax(240px, 0.7fr) minmax(430px, 1fr);
+  align-items: start;
+  gap: clamp(20px, 6vw, 100px);
+  background: #fff;
+}
+.market-shop-swipe > div:first-child {
+  padding: 30px 0 0 clamp(0px, 4vw, 45px);
+}
+.market-shop-swipe h2 {
+  max-width: 450px;
+  font-size: clamp(44px, 5.5vw, 76px);
+}
+.market-shop-swipe > div:first-child > span {
+  display: block;
+  max-width: 320px;
+  margin-top: 22px;
+  color: var(--m-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.market-shop-swipe .discover-deck {
+  width: min(600px, 100%);
+  padding-top: 0;
+}
+.market-shop-swipe .discover-deck > header {
+  display: none;
+}
+.market-shop-results-head {
+  padding: clamp(60px, 8vw, 100px) clamp(18px, 5vw, 72px) 30px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+}
+.market-shop-results-head h2 {
+  font-size: clamp(36px, 4.5vw, 58px);
+}
+.market-shop-results-head > span {
+  color: var(--m-muted);
+  font:
+    11px "DM Mono",
+    monospace;
+  text-transform: uppercase;
+}
+.market-shop-page > .market-product-grid {
+  padding: 0 clamp(18px, 5vw, 72px) 110px;
+}
+@media (max-width: 980px) {
+  .market-shop-filters {
+    grid-template-columns: repeat(3, minmax(130px, 1fr));
+  }
+  .market-shop-search {
+    grid-column: 1/-1;
+  }
+  .market-shop-swipe {
+    grid-template-columns: 1fr;
+  }
+  .market-shop-swipe > div:first-child {
+    padding: 0;
+  }
+  .market-shop-swipe .discover-deck {
+    margin: 0 auto;
+  }
+}
+@media (max-width: 560px) {
+  .market-shop-page-topline {
+    min-height: 52px;
+    font-size: 9px;
+  }
+  .market-shop-page-head {
+    display: block;
+  }
+  .market-shop-page-head > strong {
+    display: block;
+    margin-top: 20px;
+  }
+  .market-shop-filters {
+    grid-template-columns: 1fr 1fr;
+    margin-inline: 18px;
+  }
+  .market-shop-search {
+    grid-column: 1/-1;
+  }
+  .market-shop-reset {
+    grid-column: 1/-1;
+  }
+  .market-shop-swipe {
+    padding-inline: 12px;
+  }
+  .market-shop-results-head {
+    display: block;
+  }
+  .market-shop-results-head > span {
+    display: block;
+    margin-top: 14px;
   }
 }
