@@ -4683,7 +4683,7 @@ function MerchantAdmin({
       .select("sections")
       .eq("id", 1)
       .maybeSingle();
-    const existing = Array.isArray(data?.sections) ? data.sections : [];
+    const existing = Array.isArray(data?.sections) ? data.sections : sections;
     await supabase.from("storefront_layout").upsert({
       id: 1,
       sections: [
