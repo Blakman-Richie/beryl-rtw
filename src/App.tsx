@@ -968,7 +968,7 @@ function ShopPage({
 }) {
   const params = new URLSearchParams(window.location.search);
   const [category, setCategory] = useState(params.get("category") || "All");
-  const [swipeOpen, setSwipeOpen] = useState(false);
+  const [swipeOpen, setSwipeOpen] = useState(true);
   const [query, setQuery] = useState(params.get("q") || "");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
@@ -1027,12 +1027,7 @@ function ShopPage({
             that feels like you.
           </span>
         </div>
-        <div className="market-shop-page-head-actions">
-          <strong>{filteredProducts.length} pieces</strong>
-          <button onClick={() => setSwipeOpen(true)}>
-            <Heart size={16} fill="currentColor" /> Open swipe mode
-          </button>
-        </div>
+        <strong>{filteredProducts.length} pieces</strong>
       </header>
       <div className="market-shop-filters">
         <label className="market-shop-search">
