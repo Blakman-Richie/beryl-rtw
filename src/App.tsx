@@ -2776,6 +2776,7 @@ function ProductEditor({
               <option>Sets</option>
               <option>Tops</option>
               <option>Skirts</option>
+              <option>Jumpsuits</option>
             </select>
           </label>
           <label>
@@ -2937,6 +2938,7 @@ function ProductManager({
             "Sets",
             "Tops",
             "Skirts",
+            "Jumpsuits",
             "Archived",
           ].map((item) => (
             <button
