@@ -24,6 +24,21 @@ alter table public.brand_settings enable row level security;
 create policy "Anyone can view brand settings" on public.brand_settings for select using (true);
 create policy "Authenticated admin can manage brand settings" on public.brand_settings for all to authenticated using (true) with check (true);
 
+-- Merchant studio: richer catalogue controls and visual storefront builder.
+alter table public.products add column if not exists stock integer not null default 0;
+alter table public.products add column if not exists status text not null default 'active';
+alter table public.products add column if not exists description text;
+
+create table if not exists public.storefront_layout (
+  id integer primary key default 1 check (id = 1),
+  sections jsonb not null default '[]'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.storefront_layout enable row level security;
+create policy "Anyone can view storefront layout" on public.storefront_layout for select using (true);
+create policy "Authenticated admin can manage storefront layout" on public.storefront_layout for all to authenticated using (true) with check (true);
+
 insert into storage.buckets (id, name, public) values ('brand-assets', 'brand-assets', true) on conflict (id) do nothing;
 create policy "Anyone can view brand assets" on storage.objects for select using (bucket_id = 'brand-assets');
 create policy "Authenticated admin can upload brand assets" on storage.objects for insert to authenticated with check (bucket_id = 'brand-assets');
